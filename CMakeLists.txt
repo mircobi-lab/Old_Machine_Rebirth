@@ -32,6 +32,7 @@ set(REBIRTH_CORE_SOURCES
     Source/push2/Push2Display.cpp
     Source/push2/MachineScreen.cpp
     Source/control/Push2Panel.cpp
+    Source/control/ControlMap.cpp
     Source/ui/MBStudioLookAndFeel.cpp)
 
 set(REBIRTH_MODULES

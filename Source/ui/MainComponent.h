@@ -32,12 +32,17 @@ private:
     void updateScreen();
 
     MBStudioBrand brand;
-    juce::Rectangle<int> brandArea, gridArea, debossArea;
+    juce::Rectangle<int> brandArea, gridArea, debossArea, screenArea;
     juce::Label status;
     juce::TextButton audioButton { "AUDIO" }, bankButton { "BANCHI A-D" };
 
     std::unique_ptr<Push2Panel> push;
     machine::PadRef selected { 0, 1 };
+    control::Command page = control::Command::pageSample;
+    juce::String pageName { "CAMPIONA" }, lastCommand;
+    int quantise = 3;        // 1/16, come l'MPC appena accesa
+    void command (const control::Control&, bool down);
+    void refreshButtonLights();
 
     // Per ora ogni pad fa un colpo secco: serve a sentire che la catena audio va
     struct Click { std::atomic<int> remaining { 0 }; std::atomic<float> level { 0.0f }; };

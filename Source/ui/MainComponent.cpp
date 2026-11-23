@@ -50,6 +50,18 @@ MainComponent::MainComponent()
                                   ? Push2Panel::PadLight::selected : Push2Panel::PadLight::empty);
     };
 
+    push->onCommand = [this] (const control::Control& c, bool down)
+    {
+        command (c, down);
+        juce::MessageManager::callAsync ([this] { repaint(); });
+    };
+    push->onEncoder = [this] (const control::Control& c, int delta)
+    {
+        lastCommand = c.label + " " + (delta > 0 ? "+" : "") + juce::String (delta);
+        updateScreen();
+    };
+    refreshButtonLights();
+
     setSize (1100, 700);
     startTimerHz (10);
     updateScreen();
@@ -111,6 +123,56 @@ void MainComponent::hit (machine::PadRef p, int velocity)
     updateScreen();
 }
 
+void MainComponent::command (const control::Control& c, bool down)
+{
+    if (! down)
+        return;
+
+    lastCommand = c.label;
+
+    using C = control::Command;
+    switch (c.command)
+    {
+        case C::pageSample: case C::pageChop: case C::pageSound: case C::pageSequence:
+        case C::pageStep: case C::pageSong: case C::pageMix: case C::pageDisk:
+            page = c.command;
+            pageName = c.label;
+            break;
+
+        case C::quantiseValue:
+            quantise = c.index;
+            break;
+
+        case C::layout:
+            push->setBankGroup (push->getBankGroup() == 0 ? 1 : 0);
+            break;
+
+        default:
+            break;   // il resto arriva col motore
+    }
+
+    refreshButtonLights();
+    updateScreen();
+}
+
+void MainComponent::refreshButtonLights()
+{
+    if (push == nullptr)
+        return;
+
+    using C = control::Command;
+    for (const auto& b : control::buttons())
+    {
+        const bool lit = (b.command == page)
+                      || (b.command == C::quantiseValue && b.index == quantise);
+        if (b.rgb)
+            push->setButtonLight (b.number, Push2Panel::paletteIndexFor (lit ? Push2Panel::PadLight::selected
+                                                                             : Push2Panel::PadLight::loaded));
+        else
+            push->setButtonLight (b.number, lit ? 127 : 24);
+    }
+}
+
 void MainComponent::updateScreen()
 {
     if (push == nullptr)
@@ -118,15 +180,15 @@ void MainComponent::updateScreen()
 
     const int drum = lastHitDrum.load();
     juce::StringArray lines;
-    lines.add ("#OLD MACHINE REBIRTH");
+    lines.add ("#" + pageName);
     lines.add ("PAD|" + machine::bankName (selected.bank) + juce::String (selected.pad));
     lines.add ("SUONO|" + juce::String (drum < 0 ? juce::String ("-") : juce::String (drum + 1)));
+    lines.add ("QUANTIZZA|" + control::quantiseName (quantise));
     lines.add ("LIVELLO|--");
     lines.add ("ACCORDA|--");
     lines.add ("INIZIO|--");
     lines.add ("FINE|--");
-    lines.add ("DISSOLV|--");
-    lines.add ("USCITA|1-2");
+    lines.add ("TASTO|" + (lastCommand.isEmpty() ? juce::String ("-") : lastCommand));
     push->setScreenLines (lines);
 }
 
@@ -161,6 +223,19 @@ void MainComponent::paint (juce::Graphics& g)
     g.fillAll (juce::Colours::black);
     brand.paintPrinted (g, brandArea, "REBIRTH");
     brand.paintDebossed (g, debossArea);
+
+    // Quello che si vede sul display del Push, anche qui
+    if (push != nullptr)
+    {
+        const auto screen = push->lastScreen();
+        g.setColour (juce::Colour (0xff050506));
+        g.fillRect (screenArea);
+        g.setColour (juce::Colour (0xff26282b));
+        g.drawRect (screenArea, 1);
+        if (screen.isValid())
+            g.drawImage (screen, screenArea.reduced (1).toFloat(),
+                         juce::RectanglePlacement::centred);
+    }
 
     const int group = push != nullptr ? push->getBankGroup() : 0;
 
@@ -202,6 +277,8 @@ void MainComponent::resized()
     debossArea = bottom.removeFromRight (150);
     status.setBounds (bottom);
 
+    screenArea = r.removeFromTop (juce::jmin (160, r.getHeight() / 4))
+                   .withSizeKeepingCentre (juce::jmin (r.getWidth(), 960), juce::jmin (160, r.getHeight() / 4));
     gridArea = r.reduced (0, 10);
 }
 

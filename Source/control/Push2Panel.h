@@ -1,11 +1,13 @@
 #pragma once
 
 #include "machine/PadGrid.h"
+#include "control/ControlMap.h"
 #include "push2/Push2Display.h"
 
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <functional>
 #include <optional>
+#include <map>
 
 // Il Push 2 come pannello della macchina: pad, tasti, encoder e display.
 //
@@ -29,10 +31,16 @@ public:
     void setBankGroup (int group);                  // 0 = A..D, 1 = E..H
     int getBankGroup() const { return bankGroup; }
     void setScreenLines (juce::StringArray);        // cosa scrivere sul display
+    juce::Image lastScreen() const;                 // l'ultima schermata, per rivederla sul Mac
 
     std::function<void (machine::PadRef, int velocity)> onPadDown;
     std::function<void (machine::PadRef)> onPadUp;
     std::function<void (int group)> onBankGroupChanged;
+    std::function<void (const control::Control&, bool down)> onCommand;
+    std::function<void (const control::Control&, int delta)> onEncoder;
+
+    // Luce di un tasto: per i bianchi 0..127, per gli RGB l'indice della tavolozza
+    void setButtonLight (int cc, int value);
 
     static std::optional<juce::MidiDeviceInfo> choosePort (const juce::Array<juce::MidiDeviceInfo>&,
                                                            bool preferUserPort);
@@ -46,6 +54,7 @@ private:
     void sendPalette();
     void restorePalette();
     void refreshLeds (bool everything);
+    void lightAllButtons();
     void drawScreen();
     static juce::MidiMessage sysexFor (const std::vector<std::uint8_t>&);
 
@@ -61,6 +70,8 @@ private:
     std::array<PadLight, 64> onScreen {};           // cosa c'e' davvero sui LED
     bool fullRefresh = true;
     juce::StringArray screenLines;
+    juce::Image screenImage;
     juce::CriticalSection lock;
     std::vector<juce::MidiMessage> originalPalette;
+    std::map<int, int> buttonLights;      // cc -> valore mandato
 };

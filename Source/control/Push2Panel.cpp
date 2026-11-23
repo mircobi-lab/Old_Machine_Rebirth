@@ -74,6 +74,8 @@ Push2Panel::~Push2Panel()
     {
         for (int i = 36; i <= 99; ++i)
             output->sendMessageNow (juce::MidiMessage::noteOn (1, i, (juce::uint8) 0));
+        for (const auto& b : control::buttons())
+            output->sendMessageNow (juce::MidiMessage::controllerEvent (1, b.number, 0));
         restorePalette();
         output->sendMessageNow (sysexFor (push2::setMidiMode (push2::midiModeLive)));
     }
@@ -116,6 +118,7 @@ void Push2Panel::reconnect()
         // porta User; il sysex pero' lo ascolta sempre, da tutte e due le porte.
         output->sendMessageNow (sysexFor (push2::setMidiMode (push2::midiModeUser)));
         sendPalette();
+        lightAllButtons();
         fullRefresh = true;
     }
 
@@ -154,6 +157,25 @@ void Push2Panel::send (const std::vector<juce::MidiMessage>& messages)
         return;
     for (const auto& m : messages)
         output->sendMessageNow (m);
+}
+
+void Push2Panel::lightAllButtons()
+{
+    // Tutti i tasti che la macchina usa stanno accesi smorti, cosi' si vede al
+    // buio cosa c'e'; chi li accende forte e' la pagina aperta.
+    for (const auto& b : control::buttons())
+        setButtonLight (b.number, b.rgb ? paletteIndexFor (PadLight::loaded) : 24);
+}
+
+void Push2Panel::setButtonLight (int cc, int value)
+{
+    const juce::ScopedLock sl (lock);
+    const auto it = buttonLights.find (cc);
+    if (it != buttonLights.end() && it->second == value)
+        return;
+    buttonLights[cc] = value;
+    if (output != nullptr)
+        output->sendMessageNow (juce::MidiMessage::controllerEvent (1, cc, juce::jlimit (0, 127, value)));
 }
 
 void Push2Panel::setPadLight (machine::PadRef p, PadLight l)
@@ -224,8 +246,13 @@ void Push2Panel::drawScreen()
         const juce::ScopedLock sl (lock);
         lines = screenLines;
     }
-    display->setImage (mbstudio::renderMachineScreen (lines, machine::bankName (bankGroup * 4),
-                                                      machine::bankName (bankGroup * 4 + 3), font));
+    auto image = mbstudio::renderMachineScreen (lines, machine::bankName (bankGroup * 4),
+                                                machine::bankName (bankGroup * 4 + 3), font);
+    display->setImage (image);
+    {
+        const juce::ScopedLock sl (lock);
+        screenImage = image;
+    }
 }
 
 void Push2Panel::handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMessage& m)
@@ -240,6 +267,22 @@ void Push2Panel::handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMe
             entry[5] = 0x03;    // la stessa voce, ma come comando "scrivi"
             originalPalette.push_back (juce::MidiMessage::createSysExMessage (entry.data(), n));
         }
+        return;
+    }
+
+    if (m.isController())
+    {
+        const auto c = control::forButton (m.getControllerNumber());
+        if (c.command != control::Command::none)
+        {
+            if (onCommand != nullptr)
+                onCommand (c, m.getControllerValue() > 0);
+            return;
+        }
+
+        const auto e = control::forEncoder (m.getControllerNumber());
+        if (e.command != control::Command::none && onEncoder != nullptr)
+            onEncoder (e, push2::encoderDelta (m.getControllerValue()));
         return;
     }
 
@@ -260,4 +303,10 @@ void Push2Panel::handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMe
         else if (onPadUp != nullptr)
             onPadUp (p);
     }
+}
+
+juce::Image Push2Panel::lastScreen() const
+{
+    const juce::ScopedLock sl (lock);
+    return screenImage;
 }
