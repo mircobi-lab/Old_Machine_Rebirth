@@ -133,6 +133,11 @@ public:
         beginTest ("i rotativi cambiano i parametri del suono scelto");
         {
             Machine m;
+
+            // i parametri del suono stanno nella pagina SUONO: nella pagina
+            // CAMPIONA i primi tre rotativi sono quelli del registratore
+            press (m, "SUONO");
+
             auto turn = [&m] (int index, int steps)
             {
                 m.encoder (control::forEncoder (71 + index), steps);

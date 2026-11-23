@@ -1,4 +1,5 @@
 #include "Machine.h"
+#include "ui/Lang.h"
 
 namespace machine
 {
@@ -23,6 +24,7 @@ Machine::Machine()
 
 void Machine::prepare (double sampleRate)
 {
+    rec.prepare (sampleRate, 2);
     rate = sampleRate > 0.0 ? sampleRate : 44100.0;
     sampler.prepare (rate);
     stepCounter = 0.0;
@@ -312,7 +314,33 @@ void Machine::command (const control::Control& c, bool down)
             break;
 
         case C::softKey:
-            if (page == C::pageChop)
+            if (page == C::pageSample)
+            {
+                if (c.index == 0)
+                {
+                    rec.arm();
+                    setMessage ("ARMATO SOGLIA " + juce::String (rec.threshold()));
+                }
+                else if (c.index == 1)
+                {
+                    rec.startNow();
+                    setMessage ("REGISTRO");
+                }
+                else if (c.index == 2)
+                {
+                    rec.stop();
+                    setMessage (rec.hasTake() ? "REGISTRATO" : "FERMO");
+                    checkRecorder();
+                }
+                else if (c.index == 3)
+                {
+                    rec.setMonitoring (! rec.monitoring());
+                    setMessage ("ASCOLTA " + juce::String (rec.monitoring() ? "ACCESO" : "SPENTO"));
+                }
+                else
+                    setMessage ("");
+            }
+            else if (page == C::pageChop)
             {
                 if (c.index == 0)
                 {
@@ -359,7 +387,7 @@ void Machine::command (const control::Control& c, bool down)
             {
                 levelsType = levelsType == LevelsType::volume ? LevelsType::tune : LevelsType::volume;
                 setMessage (levelsType == LevelsType::volume ? "16 LIVELLI: VOLUME"
-                                                             : "16 LIVELLI: ACCORDATURA");
+                                                             : "16 LIVELLI ACCORDA");
             }
             else
             {
@@ -377,7 +405,7 @@ void Machine::command (const control::Control& c, bool down)
             else
             {
                 muteMode = ! muteMode;
-                setMessage (muteMode ? "MUTE: scegli i pad" : "MUTE SPENTO");
+                setMessage (muteMode ? "MUTE SCEGLI I PAD" : "MUTE SPENTO");
             }
             break;
 
@@ -385,12 +413,12 @@ void Machine::command (const control::Control& c, bool down)
             if (shift)
             {
                 copySource = drumIndex (selected);
-                setMessage ("COPIA: batti il pad di arrivo");
+                setMessage ("COPIA BATTI IL PAD");
             }
             else
             {
                 eraseMode = ! eraseMode;
-                setMessage (eraseMode ? "CANCELLA: scegli i pad" : "CANCELLA SPENTO");
+                setMessage (eraseMode ? "CANCELLA SCEGLI I PAD" : "CANCELLA SPENTO");
             }
             break;
 
@@ -446,6 +474,30 @@ void Machine::command (const control::Control& c, bool down)
 
 void Machine::changeParameter (int which, int steps)
 {
+    // nella pagina CAMPIONA i primi tre rotativi sono quelli del registratore,
+    // perche' li' si guardano la soglia e la durata, non il campione
+    if (page == control::Command::pageSample && which <= 2)
+    {
+        if (which == 0)
+        {
+            rec.setThreshold (rec.threshold() + steps);
+            setMessage ("SOGLIA " + juce::String (rec.threshold()));
+        }
+        else if (which == 1)
+        {
+            rec.setLengthSeconds (rec.lengthSeconds() + steps * 0.5);
+            setMessage ("DURATA " + juce::String (rec.lengthSeconds(), 1) + "S");
+        }
+        else
+        {
+            rec.setPreRollSeconds (rec.preRollSeconds() + steps * 0.05);
+            setMessage ("ANTICIPO "
+                            + juce::String (juce::roundToInt (rec.preRollSeconds() * 1000.0)) + "MS");
+        }
+
+        return;
+    }
+
     auto& d = sampler.drum (drumIndex (selected));
     const int length = d.sample.getNumSamples();
 
@@ -575,18 +627,43 @@ bool Machine::buttonLit (const control::Control& c) const
     }
 }
 
+bool Machine::checkRecorder()
+{
+    juce::AudioBuffer<float> recorded;
+    if (! rec.takeRecording (recorded))
+        return false;
+
+    const int index = drumIndex (selected);
+    pushUndo (index, lang::t ("REGISTRA"));
+
+    const auto name = "REG " + juce::String (++recordings);
+    if (! sampler.loadBuffer (index, name, recorded, rate))
+        return false;
+
+    setMessage ("REGISTRATO " + juce::String (recorded.getNumSamples() / juce::jmax (1.0, rate), 1) + "S");
+    changed();
+    return true;
+}
+
 juce::StringArray Machine::softKeyLabels() const
 {
     juce::StringArray labels;
     for (int i = 0; i < 8; ++i)
         labels.add ("");
 
-    if (page == control::Command::pageChop)
+    if (page == control::Command::pageSample)
     {
-        labels.set (0, "SPACCA");
-        labels.set (1, "PULISCI AI");
-        labels.set (2, "PULISCI MP3");
-        labels.set (3, "ANNULLA");
+        labels.set (0, lang::t ("ARMA"));
+        labels.set (1, lang::t ("REGISTRA"));
+        labels.set (2, lang::t ("STOP"));
+        labels.set (3, lang::t ("ASCOLTA"));
+    }
+    else if (page == control::Command::pageChop)
+    {
+        labels.set (0, lang::t ("SPACCA"));
+        labels.set (1, lang::t ("PULISCI AI"));
+        labels.set (2, lang::t ("PULISCI MP3"));
+        labels.set (3, lang::t ("ANNULLA"));
     }
 
     return labels;
@@ -652,15 +729,28 @@ juce::StringArray Machine::screenLines() const
     const auto& d = sampler.drum (drumIndex (selected));
 
     juce::StringArray lines;
-    lines.add ("#" + pageName);
-    lines.add ("PAD|" + bankName (selected.bank) + juce::String (selected.pad));
-    lines.add ("SUONO|" + (d.loaded() ? d.name : juce::String ("VUOTO")));
-    lines.add ("LIVELLO|" + juce::String (juce::roundToInt (d.level * 100.0f)));
-    lines.add ("ACCORDA|" + juce::String (d.tuneSemitones > 0 ? "+" : "")
-                   + juce::String (d.tuneSemitones));
-    lines.add ("PASSO|" + control::quantiseName (quantise));
-    lines.add ("TEMPO|" + juce::String (juce::roundToInt (bpm)));
-    lines.add ("STATO|" + (message.isEmpty() ? juce::String ("PRONTO") : message));
+    lines.add ("#" + lang::phrase (pageName));
+    lines.add (lang::t ("PAD") + "|" + bankName (selected.bank) + juce::String (selected.pad));
+    lines.add (lang::t ("SUONO") + "|" + (d.loaded() ? d.name : lang::t ("VUOTO")));
+    if (page == control::Command::pageSample)
+    {
+        lines.add (lang::t ("SOGLIA") + "|" + juce::String (rec.threshold()));
+        lines.add (lang::t ("DURATA") + "|" + juce::String (rec.lengthSeconds(), 1) + "S");
+        lines.add (lang::t ("ANTICIPO") + "|"
+                       + juce::String (juce::roundToInt (rec.preRollSeconds() * 1000.0)) + "MS");
+        lines.add (lang::t ("INGRESSO") + "|"
+                       + juce::String (juce::roundToInt (rec.inputLevel() * 100.0f)));
+    }
+    else
+    {
+        lines.add (lang::t ("LIVELLO") + "|" + juce::String (juce::roundToInt (d.level * 100.0f)));
+        lines.add (lang::t ("ACCORDA") + "|" + juce::String (d.tuneSemitones > 0 ? "+" : "")
+                       + juce::String (d.tuneSemitones));
+        lines.add (lang::t ("PANORAMA") + "|" + juce::String (juce::roundToInt (d.pan * 100.0f)));
+        lines.add (lang::t ("PASSO") + "|" + control::quantiseName (quantise));
+    }
+    lines.add (lang::t ("TEMPO") + "|" + juce::String (juce::roundToInt (bpm)));
+    lines.add (lang::t ("STATO") + "|" + lang::phrase (message.isEmpty() ? juce::String ("PRONTO") : message));
     return lines;
 }
 

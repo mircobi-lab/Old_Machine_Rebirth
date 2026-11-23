@@ -37,14 +37,17 @@ MainComponent::MainComponent()
     loadButton.onClick = [this] { loadOntoSelected(); };
     addAndMakeVisible (loadButton);
 
+    langButton.onClick = [this] { cycleLanguage(); };
+    addAndMakeVisible (langButton);
+
     chopButton.onClick = [this] { chooseFileToChop(); };
     addAndMakeVisible (chopButton);
 
     cleanButton.onClick = [this]
     {
         juce::PopupMenu m;
-        m.addItem (1, "PULISCI AI");
-        m.addItem (2, "PULISCI MP3");
+        m.addItem (1, lang::t ("PULISCI AI"));
+        m.addItem (2, lang::t ("PULISCI MP3"));
         m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (cleanButton),
                          [this] (int choice)
         {
@@ -81,7 +84,9 @@ MainComponent::MainComponent()
     push->onEncoder = [this] (const control::Control& c, int steps) { mpc.encoder (c, steps); };
     push->onBankGroupChanged = [this] (int g) { mpc.setBankGroup (g); };
 
+    loadLanguage();
     startOsc();
+    retranslate();
     refreshSurfaces();
 
     setSize (1100, 700);
@@ -98,9 +103,13 @@ MainComponent::~MainComponent()
 }
 
 //==============================================================================
-void MainComponent::prepareToPlay (int, double sampleRate)
+void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
     mpc.prepare (sampleRate);
+
+    // la memoria per l'ascolto dell'ingresso si prende adesso: nel filo
+    // dell'audio non si alloca
+    inputMix.setSize (2, juce::jmax (64, samplesPerBlockExpected), false, true, true);
 }
 
 void MainComponent::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
@@ -112,12 +121,74 @@ void MainComponent::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
     juce::AudioBuffer<float> view (info.buffer->getArrayOfWritePointers(),
                                    info.buffer->getNumChannels(),
                                    info.startSample, info.numSamples);
+
+    // Qui dentro arriva quello che entra dalla scheda: lo guarda prima il
+    // registratore, perche' subito dopo la macchina ci scrive sopra il suono
+    // dei pad. Se l'ascolto e' acceso l'ingresso resta nel buffer e si sente,
+    // altrimenti sparisce.
+    auto& recorder = mpc.recorder();
+    recorder.processInput (view.getArrayOfReadPointers(), view.getNumChannels(), view.getNumSamples());
+
+    if (recorder.monitoring())
+    {
+        inputMix.makeCopyOf (view, true);
+        mpc.process (view);
+
+        for (int ch = 0; ch < view.getNumChannels(); ++ch)
+            view.addFrom (ch, 0, inputMix, juce::jmin (ch, inputMix.getNumChannels() - 1),
+                          0, view.getNumSamples(), 0.7f);
+        return;
+    }
+
     mpc.process (view);
 }
 
 void MainComponent::releaseResources() {}
 
 //==============================================================================
+juce::File MainComponent::languageFile()
+{
+    return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
+               .getChildFile ("Old Machine Rebirth")
+               .getChildFile ("lingua.txt");
+}
+
+void MainComponent::loadLanguage()
+{
+    const auto saved = languageFile().loadFileAsString().trim().toUpperCase();
+    if (saved == "UK")      lang::set (lang::Language::english);
+    else if (saved == "FR") lang::set (lang::Language::francais);
+    else                    lang::set (lang::Language::italiano);
+}
+
+void MainComponent::cycleLanguage()
+{
+    switch (lang::current())
+    {
+        case lang::Language::italiano: lang::set (lang::Language::english);  break;
+        case lang::Language::english:  lang::set (lang::Language::francais); break;
+        default:                       lang::set (lang::Language::italiano); break;
+    }
+
+    const auto file = languageFile();
+    file.getParentDirectory().createDirectory();
+    file.replaceWithText (lang::name (lang::current()));
+
+    retranslate();
+    refreshSurfaces();
+    repaint();
+}
+
+void MainComponent::retranslate()
+{
+    langButton.setButtonText (lang::name (lang::current()));
+    audioButton.setButtonText (lang::t ("AUDIO"));
+    oscButton.setButtonText ("OSC");
+    loadButton.setButtonText (lang::t ("CARICA"));
+    chopButton.setButtonText (lang::t ("SPACCA"));
+    cleanButton.setButtonText (lang::t ("PULISCI"));
+}
+
 juce::File MainComponent::oscSettingsFile()
 {
     return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
@@ -238,7 +309,7 @@ void MainComponent::refreshSurfaces()
     if (osc != nullptr)
         osc->sendScreen (lines);
 
-    bankButton.setButtonText (mpc.bankGroup() == 0 ? "BANCHI A-D" : "BANCHI E-H");
+    bankButton.setButtonText (lang::phrase (mpc.bankGroup() == 0 ? "BANCHI A-D" : "BANCHI E-H"));
 }
 
 void MainComponent::timerCallback()
@@ -247,7 +318,7 @@ void MainComponent::timerCallback()
     if (push != nullptr && push->isConnected())
         t << "PUSH 2 " << push->portDescription() << "    ";
     else
-        t << "PUSH 2 NON COLLEGATO    ";
+        t << lang::t ("PUSH 2 NON COLLEGATO") << "    ";
 
     if (osc != nullptr)
         t << osc->description() << "    ";
@@ -256,13 +327,15 @@ void MainComponent::timerCallback()
         t << dev->getName().toUpperCase() << "  "
           << juce::String (dev->getCurrentSampleRate() / 1000.0, 1) << " KHZ";
     else
-        t << "NESSUNA SCHEDA AUDIO";
+        t << lang::t ("NESSUNA SCHEDA AUDIO");
 
-    t << "    VOCI " << mpc.engine().activeVoices() << "/" << SampleEngine::numVoices;
+    t << "    " << lang::t ("VOCI") << " " << mpc.engine().activeVoices() << "/" << SampleEngine::numVoices;
+
+    mpc.checkRecorder();
 
     const auto work = busyMessage();
     if (work.isNotEmpty())
-        t << "    " << work;
+        t << "    " << lang::phrase (work);
 
     status.setText (t, juce::dontSendNotification);
 }
@@ -526,6 +599,8 @@ void MainComponent::resized()
     chopButton.setBounds (top.removeFromRight (110).reduced (2));
     top.removeFromRight (8);
     cleanButton.setBounds (top.removeFromRight (110).reduced (2));
+    top.removeFromRight (8);
+    langButton.setBounds (top.removeFromRight (64).reduced (2));
     top.removeFromRight (8);
     bankButton.setBounds (top.removeFromRight (140).reduced (2));
     brandArea = top;

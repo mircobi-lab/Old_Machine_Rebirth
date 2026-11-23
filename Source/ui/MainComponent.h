@@ -3,6 +3,7 @@
 #include "control/OscSurface.h"
 #include "control/Push2Panel.h"
 #include "machine/Machine.h"
+#include "ui/Lang.h"
 #include "ui/MBStudioLookAndFeel.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -46,6 +47,10 @@ private:
     void showOscSettings();
     void startOsc();
     static juce::File oscSettingsFile();
+    static juce::File languageFile();
+    void loadLanguage();
+    void cycleLanguage();
+    void retranslate();
 
     machine::Machine mpc;
 
@@ -54,13 +59,16 @@ private:
     juce::Label status;
     juce::TextButton audioButton { "AUDIO" }, bankButton { "BANCHI A-D" },
                      oscButton { "OSC" }, loadButton { "CARICA" },
-                     chopButton { "SPACCA" }, cleanButton { "PULISCI" };
+                     chopButton { "SPACCA" }, cleanButton { "PULISCI" },
+                     langButton { "ITA" };
 
     // L'analisi di un brano intero dura: va fatta da parte, non nel filo dei
     // messaggi, altrimenti la macchina resta ferma mentre lavora.
     juce::ThreadPool pool { 1 };
     mutable juce::CriticalSection busyLock;
     juce::String busy;
+
+    juce::AudioBuffer<float> inputMix;    // per l'ascolto dell'ingresso
 
     std::unique_ptr<Push2Panel> push;
     std::unique_ptr<OscSurface> osc;

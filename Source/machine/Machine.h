@@ -3,6 +3,7 @@
 #include "control/ControlMap.h"
 #include "engine/Chopper.h"
 #include "engine/Cleaner.h"
+#include "engine/Recorder.h"
 #include "engine/SampleEngine.h"
 #include "machine/PadGrid.h"
 
@@ -48,6 +49,12 @@ public:
     void setBankGroup (int);
     PadRef selectedPad() const { return selected; }
     SampleEngine& engine() { return sampler; }
+    Recorder& recorder() { return rec; }
+    const Recorder& recorder() const { return rec; }
+
+    // Da chiamare ogni tanto dal filo dei messaggi: se il registratore ha
+    // finito, il campione va sul pad scelto.
+    bool checkRecorder();
     const SampleEngine& engine() const { return sampler; }
     double tempo() const { return bpm; }
 
@@ -87,6 +94,8 @@ private:
     void changed();
 
     SampleEngine sampler;
+    Recorder rec;
+    int recordings = 0;
 
     PadRef selected { 0, 1 };
     int group = 0;                      // 0 = A..D, 1 = E..H

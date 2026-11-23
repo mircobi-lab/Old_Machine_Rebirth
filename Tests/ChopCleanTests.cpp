@@ -182,7 +182,7 @@ public:
             expectWithinAbsoluteError (back.getSample (0, 100), original.getSample (0, 100), 1.0e-6f);
         }
 
-        beginTest ("i tasti sotto il display si accendono solo nella pagina fette");
+        beginTest ("i tasti sotto il display cambiano con la pagina");
         {
             Machine m;
             m.prepare (rate);
@@ -201,9 +201,16 @@ public:
             expectEquals (m.softKeyLabels()[0], juce::String ("SPACCA"));
             expectEquals (m.softKeyLabels()[1], juce::String ("PULISCI AI"));
 
+            // la pagina CAMPIONA ha i suoi: quelli del registratore
             auto sample = page (control::Command::pageSample);
             m.command (sample, true);
             m.command (sample, false);
+            expectEquals (m.softKeyLabels()[0], juce::String ("ARMA"));
+
+            // una pagina che non ne ha ancora li lascia spenti
+            auto mix = page (control::Command::pageMix);
+            m.command (mix, true);
+            m.command (mix, false);
             expect (m.softKeyLabels()[0].isEmpty());
         }
 
