@@ -109,7 +109,7 @@ jobs:
 
       - name: Crea l'archivio
         run: |
-          cd build/OldMachineRebirth_artefacts
+          cd build/OldMachineRebirth_artefacts/Release
           tar czf "$GITHUB_WORKSPACE/Old-Machine-Rebirth-Linux-x86_64.tar.gz" "Old Machine Rebirth"
 
       - uses: actions/upload-artifact@v4
