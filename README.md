@@ -12,11 +12,24 @@ Il progetto e' descritto in
 [docs/superpowers/specs](docs/superpowers/specs/2026-11-23-macchina-campionatore-design.md):
 cosa fa, cosa non fa, il pannello sul Push e l'ordine dei lavori.
 
-## A che punto e'
+## A che punto e' (23 novembre 2026)
 
-Scheletro: si apre la finestra in stile MBStudio, si sceglie la scheda audio, il
-Push si accende e la griglia 8x8 suona un colpo di prova. Il motore vero, cioe'
-campionamento, taglio, fette e sequencer, e' il lavoro che viene adesso.
+Fatto:
+
+- la finestra in stile MBStudio, con la griglia 8x8 a quadranti e la schermata
+  del Push rifatta anche sul Mac
+- il Push 2 si accende da solo: si mette in User mode, lascia libera la porta
+  Live per Ableton, illumina pad e tasti e scrive sul display
+- tutti i 65 tasti del Push hanno un comando, con una prova automatica che
+  tiene il conto: vedi [docs/pannello-push2.md](docs/pannello-push2.md)
+- la versione senza Push: la macchina si suona in OSC con gli stessi comandi, e
+  c'e' un banco pronto per Open Stage Control: vedi [docs/osc.md](docs/osc.md)
+- la scheda audio si sceglie dalla finestra e battendo un pad si sente un colpo
+  di prova, giusto per dire che la catena audio e' aperta
+
+Da fare, nell'ordine: voci e suoni sui pad, campionamento con soglia e taglio,
+affettatura, sequencer, passo passo e brano, mix. L'ordine completo sta nel
+documento di progetto.
 
 ## La griglia
 

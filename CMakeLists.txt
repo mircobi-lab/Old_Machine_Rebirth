@@ -33,11 +33,13 @@ set(REBIRTH_CORE_SOURCES
     Source/push2/MachineScreen.cpp
     Source/control/Push2Panel.cpp
     Source/control/ControlMap.cpp
+    Source/control/OscSurface.cpp
     Source/ui/MBStudioLookAndFeel.cpp)
 
 set(REBIRTH_MODULES
     juce::juce_audio_utils
     juce::juce_gui_extra
+    juce::juce_osc
     juce::juce_dsp)
 
 # ---------------------------------------------------------------- app
@@ -91,3 +93,18 @@ target_link_libraries(RebirthTests PRIVATE
 enable_testing()
 add_test(NAME RebirthTests
          COMMAND $<TARGET_FILE:RebirthTests>)
+
+# --------------------------------------------------- banco di comandi per OSC
+# Genera il file di sessione di Open Stage Control dalla stessa tabella dei
+# comandi che usa il Push, cosi' le due versioni non vanno fuori passo.
+juce_add_console_app(OscTemplate PRODUCT_NAME "OscTemplate")
+target_sources(OscTemplate PRIVATE tools/osc-template/Main.cpp ${REBIRTH_CORE_SOURCES})
+target_include_directories(OscTemplate PRIVATE Source)
+target_compile_definitions(OscTemplate PRIVATE
+    JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_APPLICATION_NAME_STRING="OscTemplate")
+target_link_libraries(OscTemplate PRIVATE
+    usb-1.0
+    RebirthAssets
+    ${REBIRTH_MODULES}
+    juce::juce_recommended_config_flags
+    juce::juce_recommended_warning_flags)

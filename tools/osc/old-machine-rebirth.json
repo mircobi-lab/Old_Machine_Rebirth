@@ -1,0 +1,2754 @@
+{
+  "type": "session",
+  "id": "root",
+  "linkId": "",
+  "css": "",
+  "createdWith": "Old Machine Rebirth",
+  "color": "auto",
+  "address": "/root",
+  "preArgs": "",
+  "target": "",
+  "bypass": false,
+  "tabs": [
+    {
+      "type": "tab",
+      "id": "suona",
+      "linkId": "",
+      "css": "",
+      "label": "SUONA",
+      "layout": "vertical",
+      "widgets": [
+        {
+          "type": "panel",
+          "id": "griglia",
+          "linkId": "",
+          "css": "",
+          "label": "PAD",
+          "layout": "vertical",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "panel",
+              "id": "riga_0",
+              "linkId": "",
+              "css": "",
+              "label": "",
+              "layout": "horizontal",
+              "width": "100%",
+              "height": "100%",
+              "scroll": false,
+              "innerPadding": true,
+              "widgets": [
+                {
+                  "type": "push",
+                  "id": "pad_3_13",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C13",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    13
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_3_14",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C14",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    14
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_3_15",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C15",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    15
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_3_16",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C16",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    16
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_13",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D13",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    13
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_14",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D14",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    14
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_15",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D15",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    15
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_16",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D16",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    16
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                }
+              ]
+            },
+            {
+              "type": "panel",
+              "id": "riga_1",
+              "linkId": "",
+              "css": "",
+              "label": "",
+              "layout": "horizontal",
+              "width": "100%",
+              "height": "100%",
+              "scroll": false,
+              "innerPadding": true,
+              "widgets": [
+                {
+                  "type": "push",
+                  "id": "pad_3_9",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C9",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    9
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_3_10",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C10",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    10
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_3_11",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C11",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    11
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_3_12",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C12",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    12
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_9",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D9",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    9
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_10",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D10",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    10
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_11",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D11",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    11
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_12",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D12",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    12
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                }
+              ]
+            },
+            {
+              "type": "panel",
+              "id": "riga_2",
+              "linkId": "",
+              "css": "",
+              "label": "",
+              "layout": "horizontal",
+              "width": "100%",
+              "height": "100%",
+              "scroll": false,
+              "innerPadding": true,
+              "widgets": [
+                {
+                  "type": "push",
+                  "id": "pad_3_5",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C5",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    5
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_3_6",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C6",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    6
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_3_7",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C7",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    7
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_3_8",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C8",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    8
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_5",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D5",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    5
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_6",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D6",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    6
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_7",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D7",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    7
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_8",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D8",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    8
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                }
+              ]
+            },
+            {
+              "type": "panel",
+              "id": "riga_3",
+              "linkId": "",
+              "css": "",
+              "label": "",
+              "layout": "horizontal",
+              "width": "100%",
+              "height": "100%",
+              "scroll": false,
+              "innerPadding": true,
+              "widgets": [
+                {
+                  "type": "push",
+                  "id": "pad_3_1",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C1",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    1
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_3_2",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C2",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    2
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_3_3",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C3",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    3
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_3_4",
+                  "linkId": "",
+                  "css": "",
+                  "label": "C4",
+                  "address": "/pad",
+                  "preArgs": [
+                    3,
+                    4
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_1",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D1",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    1
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_2",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D2",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    2
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_3",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D3",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    3
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_4_4",
+                  "linkId": "",
+                  "css": "",
+                  "label": "D4",
+                  "address": "/pad",
+                  "preArgs": [
+                    4,
+                    4
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                }
+              ]
+            },
+            {
+              "type": "panel",
+              "id": "riga_4",
+              "linkId": "",
+              "css": "",
+              "label": "",
+              "layout": "horizontal",
+              "width": "100%",
+              "height": "100%",
+              "scroll": false,
+              "innerPadding": true,
+              "widgets": [
+                {
+                  "type": "push",
+                  "id": "pad_1_13",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A13",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    13
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_1_14",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A14",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    14
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_1_15",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A15",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    15
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_1_16",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A16",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    16
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_13",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B13",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    13
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_14",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B14",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    14
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_15",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B15",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    15
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_16",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B16",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    16
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                }
+              ]
+            },
+            {
+              "type": "panel",
+              "id": "riga_5",
+              "linkId": "",
+              "css": "",
+              "label": "",
+              "layout": "horizontal",
+              "width": "100%",
+              "height": "100%",
+              "scroll": false,
+              "innerPadding": true,
+              "widgets": [
+                {
+                  "type": "push",
+                  "id": "pad_1_9",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A9",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    9
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_1_10",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A10",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    10
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_1_11",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A11",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    11
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_1_12",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A12",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    12
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_9",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B9",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    9
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_10",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B10",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    10
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_11",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B11",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    11
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_12",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B12",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    12
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                }
+              ]
+            },
+            {
+              "type": "panel",
+              "id": "riga_6",
+              "linkId": "",
+              "css": "",
+              "label": "",
+              "layout": "horizontal",
+              "width": "100%",
+              "height": "100%",
+              "scroll": false,
+              "innerPadding": true,
+              "widgets": [
+                {
+                  "type": "push",
+                  "id": "pad_1_5",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A5",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    5
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_1_6",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A6",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    6
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_1_7",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A7",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    7
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_1_8",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A8",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    8
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_5",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B5",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    5
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_6",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B6",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    6
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_7",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B7",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    7
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_8",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B8",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    8
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                }
+              ]
+            },
+            {
+              "type": "panel",
+              "id": "riga_7",
+              "linkId": "",
+              "css": "",
+              "label": "",
+              "layout": "horizontal",
+              "width": "100%",
+              "height": "100%",
+              "scroll": false,
+              "innerPadding": true,
+              "widgets": [
+                {
+                  "type": "push",
+                  "id": "pad_1_1",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A1",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    1
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_1_2",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A2",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    2
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_1_3",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A3",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    3
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_1_4",
+                  "linkId": "",
+                  "css": "",
+                  "label": "A4",
+                  "address": "/pad",
+                  "preArgs": [
+                    1,
+                    4
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_1",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B1",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    1
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_2",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B2",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    2
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_3",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B3",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    3
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                },
+                {
+                  "type": "push",
+                  "id": "pad_2_4",
+                  "linkId": "",
+                  "css": "",
+                  "label": "B4",
+                  "address": "/pad",
+                  "preArgs": [
+                    2,
+                    4
+                  ],
+                  "on": 100,
+                  "off": 0,
+                  "mode": "push",
+                  "colorText": "auto"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "tab",
+      "id": "pannello",
+      "linkId": "",
+      "css": "",
+      "label": "PANNELLO",
+      "layout": "vertical",
+      "widgets": [
+        {
+          "type": "panel",
+          "id": "pagine",
+          "linkId": "",
+          "css": "",
+          "label": "PAGINE",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "cc_102",
+              "linkId": "",
+              "css": "",
+              "label": "CAMPIONA",
+              "address": "/button",
+              "preArgs": [
+                102
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_103",
+              "linkId": "",
+              "css": "",
+              "label": "FETTE",
+              "address": "/button",
+              "preArgs": [
+                103
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_104",
+              "linkId": "",
+              "css": "",
+              "label": "SUONO",
+              "address": "/button",
+              "preArgs": [
+                104
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_105",
+              "linkId": "",
+              "css": "",
+              "label": "SEQUENZA",
+              "address": "/button",
+              "preArgs": [
+                105
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_106",
+              "linkId": "",
+              "css": "",
+              "label": "PASSO",
+              "address": "/button",
+              "preArgs": [
+                106
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_107",
+              "linkId": "",
+              "css": "",
+              "label": "BRANO",
+              "address": "/button",
+              "preArgs": [
+                107
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_108",
+              "linkId": "",
+              "css": "",
+              "label": "MIX",
+              "address": "/button",
+              "preArgs": [
+                108
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_109",
+              "linkId": "",
+              "css": "",
+              "label": "DISCO",
+              "address": "/button",
+              "preArgs": [
+                109
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "funzioni",
+          "linkId": "",
+          "css": "",
+          "label": "TASTI FUNZIONE",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "cc_20",
+              "linkId": "",
+              "css": "",
+              "label": "F1",
+              "address": "/button",
+              "preArgs": [
+                20
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_21",
+              "linkId": "",
+              "css": "",
+              "label": "F2",
+              "address": "/button",
+              "preArgs": [
+                21
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_22",
+              "linkId": "",
+              "css": "",
+              "label": "F3",
+              "address": "/button",
+              "preArgs": [
+                22
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_23",
+              "linkId": "",
+              "css": "",
+              "label": "F4",
+              "address": "/button",
+              "preArgs": [
+                23
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_24",
+              "linkId": "",
+              "css": "",
+              "label": "F5",
+              "address": "/button",
+              "preArgs": [
+                24
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_25",
+              "linkId": "",
+              "css": "",
+              "label": "F6",
+              "address": "/button",
+              "preArgs": [
+                25
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_26",
+              "linkId": "",
+              "css": "",
+              "label": "F7",
+              "address": "/button",
+              "preArgs": [
+                26
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_27",
+              "linkId": "",
+              "css": "",
+              "label": "F8",
+              "address": "/button",
+              "preArgs": [
+                27
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "trasporto",
+          "linkId": "",
+          "css": "",
+          "label": "TRASPORTO",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "cc_85",
+              "linkId": "",
+              "css": "",
+              "label": "PLAY",
+              "address": "/button",
+              "preArgs": [
+                85
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_86",
+              "linkId": "",
+              "css": "",
+              "label": "REC SEQ",
+              "address": "/button",
+              "preArgs": [
+                86
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_29",
+              "linkId": "",
+              "css": "",
+              "label": "STOP",
+              "address": "/button",
+              "preArgs": [
+                29
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_89",
+              "linkId": "",
+              "css": "",
+              "label": "SOVRAINCIDI",
+              "address": "/button",
+              "preArgs": [
+                89
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_90",
+              "linkId": "",
+              "css": "",
+              "label": "BATTUTE",
+              "address": "/button",
+              "preArgs": [
+                90
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_87",
+              "linkId": "",
+              "css": "",
+              "label": "NUOVA SEQ",
+              "address": "/button",
+              "preArgs": [
+                87
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_88",
+              "linkId": "",
+              "css": "",
+              "label": "COPIA",
+              "address": "/button",
+              "preArgs": [
+                88
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "quantizza",
+          "linkId": "",
+          "css": "",
+          "label": "QUANTIZZA",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "cc_43",
+              "linkId": "",
+              "css": "",
+              "label": "1/32T",
+              "address": "/button",
+              "preArgs": [
+                43
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_42",
+              "linkId": "",
+              "css": "",
+              "label": "1/32",
+              "address": "/button",
+              "preArgs": [
+                42
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_41",
+              "linkId": "",
+              "css": "",
+              "label": "1/16T",
+              "address": "/button",
+              "preArgs": [
+                41
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_40",
+              "linkId": "",
+              "css": "",
+              "label": "1/16",
+              "address": "/button",
+              "preArgs": [
+                40
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_39",
+              "linkId": "",
+              "css": "",
+              "label": "1/8T",
+              "address": "/button",
+              "preArgs": [
+                39
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_38",
+              "linkId": "",
+              "css": "",
+              "label": "1/8",
+              "address": "/button",
+              "preArgs": [
+                38
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_37",
+              "linkId": "",
+              "css": "",
+              "label": "1/4T",
+              "address": "/button",
+              "preArgs": [
+                37
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_36",
+              "linkId": "",
+              "css": "",
+              "label": "1/4",
+              "address": "/button",
+              "preArgs": [
+                36
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "tab",
+      "id": "rotativi",
+      "linkId": "",
+      "css": "",
+      "label": "ROTATIVI",
+      "layout": "grid",
+      "widgets": [
+        {
+          "type": "panel",
+          "id": "rot_tempo",
+          "linkId": "",
+          "css": "",
+          "label": "TEMPO",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "step_tempo_giu",
+              "linkId": "",
+              "css": "",
+              "label": "TEMPO -",
+              "address": "/tempo",
+              "preArgs": [
+                -1
+              ],
+              "on": -1,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "step_tempo_su",
+              "linkId": "",
+              "css": "",
+              "label": "TEMPO +",
+              "address": "/tempo",
+              "preArgs": [
+                1
+              ],
+              "on": 1,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "rot_swing",
+          "linkId": "",
+          "css": "",
+          "label": "SWING",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "step_swing_giu",
+              "linkId": "",
+              "css": "",
+              "label": "SWING -",
+              "address": "/swing",
+              "preArgs": [
+                -1
+              ],
+              "on": -1,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "step_swing_su",
+              "linkId": "",
+              "css": "",
+              "label": "SWING +",
+              "address": "/swing",
+              "preArgs": [
+                1
+              ],
+              "on": 1,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "rot_volume",
+          "linkId": "",
+          "css": "",
+          "label": "VOLUME",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "step_volume_giu",
+              "linkId": "",
+              "css": "",
+              "label": "VOLUME -",
+              "address": "/volume",
+              "preArgs": [
+                -1
+              ],
+              "on": -1,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "step_volume_su",
+              "linkId": "",
+              "css": "",
+              "label": "VOLUME +",
+              "address": "/volume",
+              "preArgs": [
+                1
+              ],
+              "on": 1,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "rot_p1",
+          "linkId": "",
+          "css": "",
+          "label": "P1",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "step_p1_giu",
+              "linkId": "",
+              "css": "",
+              "label": "P1 -",
+              "address": "/encoder",
+              "preArgs": [
+                1,
+                -1
+              ],
+              "on": -1,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "step_p1_su",
+              "linkId": "",
+              "css": "",
+              "label": "P1 +",
+              "address": "/encoder",
+              "preArgs": [
+                1,
+                1
+              ],
+              "on": 1,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "rot_p2",
+          "linkId": "",
+          "css": "",
+          "label": "P2",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "step_p2_giu",
+              "linkId": "",
+              "css": "",
+              "label": "P2 -",
+              "address": "/encoder",
+              "preArgs": [
+                2,
+                -1
+              ],
+              "on": -1,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "step_p2_su",
+              "linkId": "",
+              "css": "",
+              "label": "P2 +",
+              "address": "/encoder",
+              "preArgs": [
+                2,
+                1
+              ],
+              "on": 1,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "rot_p3",
+          "linkId": "",
+          "css": "",
+          "label": "P3",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "step_p3_giu",
+              "linkId": "",
+              "css": "",
+              "label": "P3 -",
+              "address": "/encoder",
+              "preArgs": [
+                3,
+                -1
+              ],
+              "on": -1,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "step_p3_su",
+              "linkId": "",
+              "css": "",
+              "label": "P3 +",
+              "address": "/encoder",
+              "preArgs": [
+                3,
+                1
+              ],
+              "on": 1,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "rot_p4",
+          "linkId": "",
+          "css": "",
+          "label": "P4",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "step_p4_giu",
+              "linkId": "",
+              "css": "",
+              "label": "P4 -",
+              "address": "/encoder",
+              "preArgs": [
+                4,
+                -1
+              ],
+              "on": -1,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "step_p4_su",
+              "linkId": "",
+              "css": "",
+              "label": "P4 +",
+              "address": "/encoder",
+              "preArgs": [
+                4,
+                1
+              ],
+              "on": 1,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "rot_p5",
+          "linkId": "",
+          "css": "",
+          "label": "P5",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "step_p5_giu",
+              "linkId": "",
+              "css": "",
+              "label": "P5 -",
+              "address": "/encoder",
+              "preArgs": [
+                5,
+                -1
+              ],
+              "on": -1,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "step_p5_su",
+              "linkId": "",
+              "css": "",
+              "label": "P5 +",
+              "address": "/encoder",
+              "preArgs": [
+                5,
+                1
+              ],
+              "on": 1,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "rot_p6",
+          "linkId": "",
+          "css": "",
+          "label": "P6",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "step_p6_giu",
+              "linkId": "",
+              "css": "",
+              "label": "P6 -",
+              "address": "/encoder",
+              "preArgs": [
+                6,
+                -1
+              ],
+              "on": -1,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "step_p6_su",
+              "linkId": "",
+              "css": "",
+              "label": "P6 +",
+              "address": "/encoder",
+              "preArgs": [
+                6,
+                1
+              ],
+              "on": 1,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "rot_p7",
+          "linkId": "",
+          "css": "",
+          "label": "P7",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "step_p7_giu",
+              "linkId": "",
+              "css": "",
+              "label": "P7 -",
+              "address": "/encoder",
+              "preArgs": [
+                7,
+                -1
+              ],
+              "on": -1,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "step_p7_su",
+              "linkId": "",
+              "css": "",
+              "label": "P7 +",
+              "address": "/encoder",
+              "preArgs": [
+                7,
+                1
+              ],
+              "on": 1,
+              "mode": "push"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "id": "rot_p8",
+          "linkId": "",
+          "css": "",
+          "label": "P8",
+          "layout": "horizontal",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "step_p8_giu",
+              "linkId": "",
+              "css": "",
+              "label": "P8 -",
+              "address": "/encoder",
+              "preArgs": [
+                8,
+                -1
+              ],
+              "on": -1,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "step_p8_su",
+              "linkId": "",
+              "css": "",
+              "label": "P8 +",
+              "address": "/encoder",
+              "preArgs": [
+                8,
+                1
+              ],
+              "on": 1,
+              "mode": "push"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "tab",
+      "id": "schermo",
+      "linkId": "",
+      "css": "",
+      "label": "SCHERMO",
+      "layout": "vertical",
+      "widgets": [
+        {
+          "type": "text",
+          "id": "titolo",
+          "linkId": "",
+          "css": "",
+          "address": "/screen/title",
+          "value": "OSC{/screen/title, OLD MACHINE REBIRTH}"
+        },
+        {
+          "type": "text",
+          "id": "campo_1",
+          "linkId": "",
+          "css": "",
+          "address": "/screen/field",
+          "preArgs": [
+            1
+          ],
+          "value": "OSC{/screen/field 1, -}",
+          "vertical": false
+        },
+        {
+          "type": "text",
+          "id": "campo_2",
+          "linkId": "",
+          "css": "",
+          "address": "/screen/field",
+          "preArgs": [
+            2
+          ],
+          "value": "OSC{/screen/field 2, -}",
+          "vertical": false
+        },
+        {
+          "type": "text",
+          "id": "campo_3",
+          "linkId": "",
+          "css": "",
+          "address": "/screen/field",
+          "preArgs": [
+            3
+          ],
+          "value": "OSC{/screen/field 3, -}",
+          "vertical": false
+        },
+        {
+          "type": "text",
+          "id": "campo_4",
+          "linkId": "",
+          "css": "",
+          "address": "/screen/field",
+          "preArgs": [
+            4
+          ],
+          "value": "OSC{/screen/field 4, -}",
+          "vertical": false
+        },
+        {
+          "type": "text",
+          "id": "campo_5",
+          "linkId": "",
+          "css": "",
+          "address": "/screen/field",
+          "preArgs": [
+            5
+          ],
+          "value": "OSC{/screen/field 5, -}",
+          "vertical": false
+        },
+        {
+          "type": "text",
+          "id": "campo_6",
+          "linkId": "",
+          "css": "",
+          "address": "/screen/field",
+          "preArgs": [
+            6
+          ],
+          "value": "OSC{/screen/field 6, -}",
+          "vertical": false
+        },
+        {
+          "type": "text",
+          "id": "campo_7",
+          "linkId": "",
+          "css": "",
+          "address": "/screen/field",
+          "preArgs": [
+            7
+          ],
+          "value": "OSC{/screen/field 7, -}",
+          "vertical": false
+        },
+        {
+          "type": "text",
+          "id": "campo_8",
+          "linkId": "",
+          "css": "",
+          "address": "/screen/field",
+          "preArgs": [
+            8
+          ],
+          "value": "OSC{/screen/field 8, -}",
+          "vertical": false
+        }
+      ]
+    },
+    {
+      "type": "tab",
+      "id": "resto",
+      "linkId": "",
+      "css": "",
+      "label": "ALTRO",
+      "layout": "vertical",
+      "widgets": [
+        {
+          "type": "panel",
+          "id": "resto_p",
+          "linkId": "",
+          "css": "",
+          "label": "ALTRI TASTI",
+          "layout": "grid",
+          "width": "100%",
+          "height": "100%",
+          "scroll": false,
+          "innerPadding": true,
+          "widgets": [
+            {
+              "type": "push",
+              "id": "cc_116",
+              "linkId": "",
+              "css": "",
+              "label": "CORREGGI",
+              "address": "/button",
+              "preArgs": [
+                116
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_117",
+              "linkId": "",
+              "css": "",
+              "label": "RADDOPPIA",
+              "address": "/button",
+              "preArgs": [
+                117
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_35",
+              "linkId": "",
+              "css": "",
+              "label": "RICAMPIONA",
+              "address": "/button",
+              "preArgs": [
+                35
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_118",
+              "linkId": "",
+              "css": "",
+              "label": "CANCELLA",
+              "address": "/button",
+              "preArgs": [
+                118
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_119",
+              "linkId": "",
+              "css": "",
+              "label": "ANNULLA",
+              "address": "/button",
+              "preArgs": [
+                119
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_60",
+              "linkId": "",
+              "css": "",
+              "label": "MUTE",
+              "address": "/button",
+              "preArgs": [
+                60
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_61",
+              "linkId": "",
+              "css": "",
+              "label": "SOLO",
+              "address": "/button",
+              "preArgs": [
+                61
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_3",
+              "linkId": "",
+              "css": "",
+              "label": "TAP",
+              "address": "/button",
+              "preArgs": [
+                3
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_9",
+              "linkId": "",
+              "css": "",
+              "label": "METRO",
+              "address": "/button",
+              "preArgs": [
+                9
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_30",
+              "linkId": "",
+              "css": "",
+              "label": "SETUP",
+              "address": "/button",
+              "preArgs": [
+                30
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_59",
+              "linkId": "",
+              "css": "",
+              "label": "A LIVE",
+              "address": "/button",
+              "preArgs": [
+                59
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_52",
+              "linkId": "",
+              "css": "",
+              "label": "AGG EFFETTO",
+              "address": "/button",
+              "preArgs": [
+                52
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_53",
+              "linkId": "",
+              "css": "",
+              "label": "AGG TRACCIA",
+              "address": "/button",
+              "preArgs": [
+                53
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_110",
+              "linkId": "",
+              "css": "",
+              "label": "PARAMETRI",
+              "address": "/button",
+              "preArgs": [
+                110
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_112",
+              "linkId": "",
+              "css": "",
+              "label": "MIXER",
+              "address": "/button",
+              "preArgs": [
+                112
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_111",
+              "linkId": "",
+              "css": "",
+              "label": "SFOGLIA",
+              "address": "/button",
+              "preArgs": [
+                111
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_113",
+              "linkId": "",
+              "css": "",
+              "label": "SEQUENZE",
+              "address": "/button",
+              "preArgs": [
+                113
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_28",
+              "linkId": "",
+              "css": "",
+              "label": "GENERALE",
+              "address": "/button",
+              "preArgs": [
+                28
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_56",
+              "linkId": "",
+              "css": "",
+              "label": "NOTE REPEAT",
+              "address": "/button",
+              "preArgs": [
+                56
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_57",
+              "linkId": "",
+              "css": "",
+              "label": "FULL LEVEL",
+              "address": "/button",
+              "preArgs": [
+                57
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_58",
+              "linkId": "",
+              "css": "",
+              "label": "16 LIVELLI",
+              "address": "/button",
+              "preArgs": [
+                58
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_31",
+              "linkId": "",
+              "css": "",
+              "label": "DISPOSIZIONE",
+              "address": "/button",
+              "preArgs": [
+                31
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_50",
+              "linkId": "",
+              "css": "",
+              "label": "SUONA",
+              "address": "/button",
+              "preArgs": [
+                50
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_51",
+              "linkId": "",
+              "css": "",
+              "label": "SEQUENZE",
+              "address": "/button",
+              "preArgs": [
+                51
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_55",
+              "linkId": "",
+              "css": "",
+              "label": "ACCORDA SU",
+              "address": "/button",
+              "preArgs": [
+                55
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_54",
+              "linkId": "",
+              "css": "",
+              "label": "ACCORDA GIU",
+              "address": "/button",
+              "preArgs": [
+                54
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_62",
+              "linkId": "",
+              "css": "",
+              "label": "BATTUTA PREC",
+              "address": "/button",
+              "preArgs": [
+                62
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_63",
+              "linkId": "",
+              "css": "",
+              "label": "BATTUTA SUCC",
+              "address": "/button",
+              "preArgs": [
+                63
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_49",
+              "linkId": "",
+              "css": "",
+              "label": "SHIFT",
+              "address": "/button",
+              "preArgs": [
+                49
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_48",
+              "linkId": "",
+              "css": "",
+              "label": "SCEGLI",
+              "address": "/button",
+              "preArgs": [
+                48
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_46",
+              "linkId": "",
+              "css": "",
+              "label": "SU",
+              "address": "/button",
+              "preArgs": [
+                46
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_47",
+              "linkId": "",
+              "css": "",
+              "label": "GIU",
+              "address": "/button",
+              "preArgs": [
+                47
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_44",
+              "linkId": "",
+              "css": "",
+              "label": "SINISTRA",
+              "address": "/button",
+              "preArgs": [
+                44
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            },
+            {
+              "type": "push",
+              "id": "cc_45",
+              "linkId": "",
+              "css": "",
+              "label": "DESTRA",
+              "address": "/button",
+              "preArgs": [
+                45
+              ],
+              "on": 1,
+              "off": 0,
+              "mode": "push"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
