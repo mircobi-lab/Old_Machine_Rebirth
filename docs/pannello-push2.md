@@ -105,6 +105,32 @@ E' il fader dell'MPC, assegnabile a un parametro, come sull'MPC Sample.
 Quattro banchi per volta a quadranti, il pad 1 in basso a sinistra di ogni
 quadrante; Layout passa al gruppo E-H. Vedi il README.
 
+## Le luci dei tasti
+
+Ogni tasto ha un colore e uno stato, non tutti lo stesso blu. Il trasporto, in
+basso a destra del Push, usa i colori di sempre:
+
+| Tasto | Numero | Come si accende |
+|---|---|---|
+| PLAY | 85 | verde pieno mentre gira, smorto da fermo |
+| STOP | 29 | bianco pieno quando e' fermo, smorto mentre gira |
+| REC | 86 | rosso pieno mentre scrive, lampeggiante quando aspetta |
+| AUTOMATE (sovraincidi) | 89 | ambra quando e' acceso |
+
+SHIFT con REC arma il campionatore invece della sequenza, come SAMPLE RECORD
+sulla macchina vera: il tasto lampeggia finche' il suono non supera la soglia,
+poi resta rosso fisso mentre registra.
+
+Il lampeggio non lo facciamo noi a colpi di messaggi: lo fa il Push. Il colore
+di partenza va sul canale 0 e l'animazione sul canale che dice tipo e durata,
+dal manuale di Ableton: 11-15 lampeggio (il 14 e' un quarto), 6-10 pulsazione,
+1-5 una volta sola. Il secondo colore e' lo spento, cosi' il tasto fa
+acceso-spento da solo. JUCE conta i canali da 1 e il manuale da 0, quindi il
+canale 14 del manuale e' il 15 di JUCE.
+
+Gli altri tasti sono bianchi, smorti quando il comando c'e' ma non e' attivo e
+pieni quando lo e'. Mute, solo e cancella sono ambra, il metronomo verde.
+
 ## I colori dei pad
 
 Il colore dice di che famiglia e' il suono, cosi' guardando la griglia si capisce

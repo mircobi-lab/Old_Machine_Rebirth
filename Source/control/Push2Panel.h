@@ -41,13 +41,17 @@ public:
     std::function<void (float position)> onTouchStrip;   // la striscia: 0 in basso, 1 in cima
 
     // Luce di un tasto: per i bianchi 0..127, per gli RGB l'indice della tavolozza
-    void setButtonLight (int cc, int value);
+    void setButtonLight (int cc, int value, bool blink = false);
 
     static std::optional<juce::MidiDeviceInfo> choosePort (const juce::Array<juce::MidiDeviceInfo>&,
                                                            bool preferUserPort);
     // L'indice nella tavolozza: lo stato del pad piu' la famiglia del suono.
     static int paletteIndexFor (machine::PadLight, sound::Kind);
     static int numberOfPaletteEntries();
+
+    // La voce della tavolozza per il colore di un tasto: bianco, verde, rosso
+    // o ambra, smorto o pieno.
+    static int paletteIndexForButton (juce::Colour, bool bright);
 
 private:
     void handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMessage&) override;

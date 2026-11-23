@@ -69,6 +69,19 @@ public:
     // serve per sentire il ritaglio mentre lo si muove.
     void auditionSelected();
     bool buttonLit (const control::Control&) const;
+
+    // Come deve stare acceso un tasto. I tasti del trasporto, in basso a
+    // destra del Push, hanno i colori di sempre: verde il play, rosso la
+    // registrazione, bianco il resto.
+    enum class Lamp { spento, smorto, acceso, lampeggia };
+
+    struct ButtonLamp
+    {
+        Lamp state = Lamp::smorto;
+        juce::Colour colour { 0xfff3f3f1 };
+    };
+
+    ButtonLamp lampFor (const control::Control&) const;
     juce::StringArray screenLines() const;
     // Le etichette degli otto tasti sotto il display, che cambiano con la
     // pagina. Una casella vuota vuol dire tasto spento.

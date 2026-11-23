@@ -634,8 +634,20 @@ void Machine::command (const control::Control& c, bool down)
             break;
 
         case C::recordSequence:
-            seq.toggleRecord();
-            setMessage (seq.isRecording() ? "REC SEQ ACCESO" : "REC SEQ SPENTO");
+            if (shift)
+            {
+                // SHIFT + REC: si campiona, come SAMPLE RECORD sulla macchina
+                // vera. Il tasto lampeggia finche' aspetta il suono.
+                page = C::pageSample;
+                pageName = "CAMPIONA";
+                rec.arm();
+                setMessage ("ARMATO SOGLIA " + juce::String (rec.threshold()));
+            }
+            else
+            {
+                seq.toggleRecord();
+                setMessage (seq.isRecording() ? "REC SEQ ACCESO" : "REC SEQ SPENTO");
+            }
             break;
 
         case C::overdub:
@@ -1132,6 +1144,65 @@ bool Machine::checkRecorder()
     setMessage ("REGISTRATO " + juce::String (recorded.getNumSamples() / juce::jmax (1.0, rate), 1) + "S");
     changed();
     return true;
+}
+
+Machine::ButtonLamp Machine::lampFor (const control::Control& c) const
+{
+    using C = control::Command;
+
+    const juce::Colour bianco (0xfff3f3f1);
+    const juce::Colour verde  (0xff3ee05c);
+    const juce::Colour rosso  (0xffff3b30);
+    const juce::Colour ambra  (0xffffb020);
+
+    const bool lit = buttonLit (c);
+
+    switch (c.command)
+    {
+        case C::play:
+            // verde fisso mentre gira, smorto da fermo
+            return { seq.isPlaying() ? Lamp::acceso : Lamp::smorto, verde };
+
+        case C::stop:
+            // bianco pieno quando e' fermo: e' quello il momento in cui serve
+            return { seq.isPlaying() ? Lamp::smorto : Lamp::acceso, bianco };
+
+        case C::recordSequence:
+            // rosso fisso mentre scrive, lampeggiante quando aspetta: o il
+            // suono da campionare, o il via della sequenza
+            if (rec.isWaiting())
+                return { Lamp::lampeggia, rosso };
+            if (rec.isRecording())
+                return { Lamp::acceso, rosso };
+            if (seq.isRecording())
+                return { seq.isPlaying() ? Lamp::acceso : Lamp::lampeggia, rosso };
+            return { Lamp::smorto, rosso };
+
+        case C::overdub:
+            return { seq.isOverdub() ? Lamp::acceso : Lamp::smorto, ambra };
+
+        case C::recordSample:
+            // la registrazione del campione: lampeggia mentre aspetta il suono
+            if (rec.isWaiting())
+                return { Lamp::lampeggia, rosso };
+            return { rec.isRecording() ? Lamp::acceso : Lamp::smorto, rosso };
+
+        case C::resample:
+            return { resampling ? Lamp::acceso : Lamp::smorto, rosso };
+
+        case C::metronome:
+            return { metronome ? Lamp::acceso : Lamp::smorto, verde };
+
+        case C::padMute:
+        case C::padSolo:
+        case C::erase:
+            return { lit ? Lamp::acceso : Lamp::smorto, ambra };
+
+        default:
+            break;
+    }
+
+    return { lit ? Lamp::acceso : Lamp::smorto, bianco };
 }
 
 juce::StringArray Machine::softKeyLabels() const

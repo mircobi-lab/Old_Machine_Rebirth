@@ -18,6 +18,38 @@ constexpr int statesPerKind = 3;
 constexpr Rgb emptyColour { 0x1b, 0x1d, 0x1f };     // vuoto, quasi spento
 constexpr Rgb mutedColour { 0xff, 0x3b, 0x30 };     // mutato, rosso
 
+// I colori dei tasti, in coda alle famiglie: bianco, verde, rosso e ambra,
+// ognuno smorto e pieno. Il verde e il rosso sono quelli del trasporto, che
+// su una macchina si riconoscono senza leggere.
+constexpr Rgb buttonColours[] = {
+    { 0xf3, 0xf3, 0xf1 },   // bianco
+    { 0x3e, 0xe0, 0x5c },   // verde
+    { 0xff, 0x3b, 0x30 },   // rosso
+    { 0xff, 0xb0, 0x20 }    // ambra
+};
+constexpr int numButtonColours = (int) (sizeof (buttonColours) / sizeof (Rgb));
+
+int buttonColourIndex (juce::Colour c)
+{
+    int best = 0;
+    int bestDistance = std::numeric_limits<int>::max();
+
+    for (int i = 0; i < numButtonColours; ++i)
+    {
+        const auto& b = buttonColours[i];
+        const int d = std::abs ((int) c.getRed() - (int) b.r)
+                        + std::abs ((int) c.getGreen() - (int) b.g)
+                        + std::abs ((int) c.getBlue() - (int) b.b);
+        if (d < bestDistance)
+        {
+            bestDistance = d;
+            best = i;
+        }
+    }
+
+    return best;
+}
+
 Rgb toRgb (juce::Colour c)
 {
     return { c.getRed(), c.getGreen(), c.getBlue() };
@@ -31,20 +63,40 @@ Rgb colourForEntry (int entry)
         return mutedColour;
 
     const int which = entry - 2;
-    const auto kind = sound::kindFromIndex (which / statesPerKind);
+    const int kindEntries = sound::numKinds * statesPerKind;
 
-    switch (which % statesPerKind)
+    if (which < kindEntries)
     {
-        case 0:  return toRgb (sound::colour (kind));
-        case 1:  return toRgb (sound::colourSelected (kind));
-        default: return toRgb (sound::colourPlaying (kind));
+        const auto kind = sound::kindFromIndex (which / statesPerKind);
+
+        switch (which % statesPerKind)
+        {
+            case 0:  return toRgb (sound::colour (kind));
+            case 1:  return toRgb (sound::colourSelected (kind));
+            default: return toRgb (sound::colourPlaying (kind));
+        }
     }
+
+    // i tasti: prima tutti gli smorti, poi tutti i pieni
+    const int button = which - kindEntries;
+    const auto& c = buttonColours[button % numButtonColours];
+
+    if (button < numButtonColours)
+        return toRgb (juce::Colour::fromRGB (c.r, c.g, c.b).withMultipliedBrightness (0.25f));
+
+    return c;
 }
 }
 
 int Push2Panel::numberOfPaletteEntries()
 {
-    return 2 + sound::numKinds * statesPerKind;
+    return 2 + sound::numKinds * statesPerKind + numButtonColours * 2;
+}
+
+int Push2Panel::paletteIndexForButton (juce::Colour colour, bool bright)
+{
+    const int base = firstPaletteIndex + 2 + sound::numKinds * statesPerKind;
+    return base + buttonColourIndex (colour) + (bright ? numButtonColours : 0);
 }
 
 int Push2Panel::paletteIndexFor (machine::PadLight l, sound::Kind kind)
@@ -204,15 +256,31 @@ void Push2Panel::lightAllButtons()
                                                            sound::Kind::giro) : 24);
 }
 
-void Push2Panel::setButtonLight (int cc, int value)
+void Push2Panel::setButtonLight (int cc, int value, bool blink)
 {
     const juce::ScopedLock sl (lock);
+
+    // il lampeggio sta nel valore ricordato, altrimenti un tasto che passa da
+    // fisso a lampeggiante con lo stesso colore non verrebbe rimandato
+    const int wanted = value + (blink ? 1000 : 0);
+
     const auto it = buttonLights.find (cc);
-    if (it != buttonLights.end() && it->second == value)
+    if (it != buttonLights.end() && it->second == wanted)
         return;
-    buttonLights[cc] = value;
-    if (output != nullptr)
-        output->sendMessageNow (juce::MidiMessage::controllerEvent (1, cc, juce::jlimit (0, 127, value)));
+
+    buttonLights[cc] = wanted;
+
+    if (output == nullptr)
+        return;
+
+    // Il colore di partenza va sul canale 0, e l'animazione sul canale che
+    // dice il tipo e la durata: il 14 e' il lampeggio da un quarto. Il
+    // secondo colore e' lo spento, cosi' il tasto fa acceso-spento.
+    // (JUCE conta i canali da 1, il manuale del Push da 0.)
+    output->sendMessageNow (juce::MidiMessage::controllerEvent (1, cc, juce::jlimit (0, 127, value)));
+
+    if (blink)
+        output->sendMessageNow (juce::MidiMessage::controllerEvent (15, cc, 0));
 }
 
 void Push2Panel::setPadLight (machine::PadRef p, machine::PadLight l, sound::Kind kind)

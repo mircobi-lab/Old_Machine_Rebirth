@@ -354,15 +354,22 @@ void MainComponent::refreshLights()
 
     for (const auto& b : control::buttons())
     {
-        const bool lit = mpc.buttonLit (b);
-        const int value = b.rgb ? Push2Panel::paletteIndexFor (lit ? machine::PadLight::selected
-                                                                   : machine::PadLight::loaded,
-                                                               sound::Kind::giro)
-                                : (lit ? 127 : 24);
+        const auto lamp = mpc.lampFor (b);
+        const bool bright = lamp.state == machine::Machine::Lamp::acceso
+                                || lamp.state == machine::Machine::Lamp::lampeggia;
+        const bool blink = lamp.state == machine::Machine::Lamp::lampeggia;
+
+        int value = 0;
+        if (b.rgb)
+            value = lamp.state == machine::Machine::Lamp::spento
+                        ? 0 : Push2Panel::paletteIndexForButton (lamp.colour, bright);
+        else
+            value = lamp.state == machine::Machine::Lamp::spento ? 0 : (bright ? 127 : 24);
+
         if (push != nullptr)
-            push->setButtonLight (b.number, value);
+            push->setButtonLight (b.number, value, blink);
         if (osc != nullptr)
-            osc->sendButtonLight (b.number, b.rgb ? (lit ? 127 : 0) : value);
+            osc->sendButtonLight (b.number, b.rgb ? (bright ? 127 : 0) : value);
     }
 }
 
