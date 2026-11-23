@@ -205,6 +205,17 @@ public:
             expectEquals (seq.swing(), 75);
         }
 
+        beginTest ("la macchina non pesa sulla pila");
+        {
+            // Le 99 sequenze sono un paio di megabyte: devono stare nel
+            // mucchio, altrimenti una macchina creata sulla pila la fa
+            // scoppiare, e su Windows la pila e' un megabyte.
+            expect (sizeof (Sequencer) < 64 * 1024,
+                    "il sequencer pesa " + juce::String ((int) sizeof (Sequencer)) + " byte");
+            expect (sizeof (machine::Machine) < 256 * 1024,
+                    "la macchina pesa " + juce::String ((int) sizeof (machine::Machine)) + " byte");
+        }
+
         beginTest ("i tasti del trasporto accendono le spie giuste");
         {
             machine::Machine m;

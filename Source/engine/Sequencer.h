@@ -4,6 +4,7 @@
 
 #include <array>
 #include <atomic>
+#include <memory>
 
 // Il sequencer: registra quello che si batte sui pad e lo rifa a tempo.
 //
@@ -98,7 +99,12 @@ private:
     int swungTick (int tick) const;
     void fire (SampleEngine&, int fromTick, int toTick);
 
-    std::array<Sequence, numSequences> sequences;
+    // Le 99 sequenze stanno nel mucchio, non dentro l'oggetto: in tutto sono
+    // un paio di megabyte, e una macchina creata sulla pila li farebbe
+    // scoppiare (su Windows la pila di un filo e' un megabyte). La memoria si
+    // prende una volta sola, quando la macchina nasce, quindi il filo
+    // dell'audio continua a non allocare niente.
+    std::unique_ptr<Sequence[]> sequences { new Sequence[numSequences] };
     int current = 0;
 
     double rate = 44100.0;

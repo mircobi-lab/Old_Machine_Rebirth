@@ -12,12 +12,12 @@ void Sequencer::prepare (double sampleRate)
 
 int Sequencer::bars() const
 {
-    return sequences[(size_t) current].barCount.load();
+    return sequences[current].barCount.load();
 }
 
 void Sequencer::setBars (int count)
 {
-    sequences[(size_t) current].barCount.store (juce::jlimit (1, maxBars, count));
+    sequences[current].barCount.store (juce::jlimit (1, maxBars, count));
 }
 
 int Sequencer::eventCount() const
@@ -30,7 +30,7 @@ int Sequencer::eventCount (int sequence) const
     if (! juce::isPositiveAndBelow (sequence, numSequences))
         return 0;
 
-    return sequences[(size_t) sequence].count.load();
+    return sequences[sequence].count.load();
 }
 
 int Sequencer::lengthInTicks() const
@@ -143,7 +143,7 @@ void Sequencer::recordHit (int drum, int velocity)
     if (! recording.load() || ! playing.load())
         return;
 
-    auto& sequence = sequences[(size_t) current];
+    auto& sequence = sequences[current];
     const int count = sequence.count.load();
     if (count >= maxEvents)
         return;
@@ -161,7 +161,7 @@ void Sequencer::recordHit (int drum, int velocity)
 
 void Sequencer::eraseDrum (int drum)
 {
-    auto& sequence = sequences[(size_t) current];
+    auto& sequence = sequences[current];
 
     editing.store (true);
 
@@ -178,14 +178,14 @@ void Sequencer::eraseDrum (int drum)
 void Sequencer::clearSequence()
 {
     editing.store (true);
-    sequences[(size_t) current].count.store (0);
+    sequences[current].count.store (0);
     editing.store (false);
 }
 
 void Sequencer::newSequence()
 {
     for (int i = 0; i < numSequences; ++i)
-        if (sequences[(size_t) i].count.load() == 0)
+        if (sequences[i].count.load() == 0)
         {
             setSequence (i);
             return;
@@ -201,8 +201,8 @@ void Sequencer::copyTo (int destination)
     if (! juce::isPositiveAndBelow (destination, numSequences) || destination == current)
         return;
 
-    const auto& from = sequences[(size_t) current];
-    auto& to = sequences[(size_t) destination];
+    const auto& from = sequences[current];
+    auto& to = sequences[destination];
     const int count = from.count.load();
 
     editing.store (true);
@@ -216,7 +216,7 @@ void Sequencer::copyTo (int destination)
 
 void Sequencer::doubleLength()
 {
-    auto& sequence = sequences[(size_t) current];
+    auto& sequence = sequences[current];
     const int count = sequence.count.load();
     const int length = lengthInTicks();
     const int newBars = juce::jmin (maxBars, bars() * 2);
@@ -240,7 +240,7 @@ void Sequencer::doubleLength()
 
 void Sequencer::halveLength()
 {
-    auto& sequence = sequences[(size_t) current];
+    auto& sequence = sequences[current];
     const int newBars = juce::jmax (1, bars() / 2);
     if (newBars == bars())
         return;
@@ -277,7 +277,7 @@ int Sequencer::swungTick (int tick) const
 
 void Sequencer::fire (SampleEngine& engine, int fromTick, int toTick)
 {
-    auto& sequence = sequences[(size_t) current];
+    auto& sequence = sequences[current];
     const int count = sequence.count.load();
     const int length = lengthInTicks();
 
