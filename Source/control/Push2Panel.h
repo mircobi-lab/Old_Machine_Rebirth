@@ -1,6 +1,6 @@
 #pragma once
 
-#include "machine/PadGrid.h"
+#include "machine/Machine.h"
 #include "control/ControlMap.h"
 #include "push2/Push2Display.h"
 
@@ -19,15 +19,13 @@ class Push2Panel final : private juce::MidiInputCallback,
                          private juce::Timer
 {
 public:
-    enum class PadLight { off, empty, loaded, selected, playing };
-
     explicit Push2Panel (juce::Typeface::Ptr displayFont);
     ~Push2Panel() override;
 
     bool isConnected() const { return input != nullptr && output != nullptr; }
     juce::String portDescription() const { return portName; }
 
-    void setPadLight (machine::PadRef, PadLight);
+    void setPadLight (machine::PadRef, machine::PadLight);
     void setBankGroup (int group);                  // 0 = A..D, 1 = E..H
     int getBankGroup() const { return bankGroup; }
     void setScreenLines (juce::StringArray);        // cosa scrivere sul display
@@ -44,7 +42,7 @@ public:
 
     static std::optional<juce::MidiDeviceInfo> choosePort (const juce::Array<juce::MidiDeviceInfo>&,
                                                            bool preferUserPort);
-    static int paletteIndexFor (PadLight);
+    static int paletteIndexFor (machine::PadLight);
 
 private:
     void handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMessage&) override;
@@ -66,8 +64,8 @@ private:
 
     juce::String portName;
     int bankGroup = 0;
-    std::array<PadLight, machine::numDrums> lights {};
-    std::array<PadLight, 64> onScreen {};           // cosa c'e' davvero sui LED
+    std::array<machine::PadLight, machine::numDrums> lights {};
+    std::array<machine::PadLight, 64> onScreen {};           // cosa c'e' davvero sui LED
     bool fullRefresh = true;
     juce::StringArray screenLines;
     juce::Image screenImage;

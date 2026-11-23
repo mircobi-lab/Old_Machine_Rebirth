@@ -28,6 +28,7 @@ FetchContent_MakeAvailable(JUCE libusb)
 # simboli, quindi si condivide la lista.
 set(REBIRTH_CORE_SOURCES
     Source/machine/PadGrid.cpp
+    Source/machine/Machine.cpp
     Source/engine/SampleEngine.cpp
     Source/engine/StarterKit.cpp
     Source/push2/Push2Protocol.cpp

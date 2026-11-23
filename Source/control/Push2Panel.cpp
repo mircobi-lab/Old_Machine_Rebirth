@@ -14,19 +14,21 @@ constexpr Rgb paletteColours[] = {
     { 0x3d, 0x8b, 0xff },   // caricato, blu
     { 0xff, 0xb0, 0x20 },   // scelto, ambra
     { 0xf3, 0xf3, 0xf1 },   // che suona, bianco
+    { 0xff, 0x3b, 0x30 },   // mutato, rosso
 };
 constexpr int numPaletteEntries = (int) (sizeof (paletteColours) / sizeof (Rgb));
 }
 
-int Push2Panel::paletteIndexFor (PadLight l)
+int Push2Panel::paletteIndexFor (machine::PadLight l)
 {
     switch (l)
     {
-        case PadLight::off:      return 0;                      // nero, voce di serie
-        case PadLight::empty:    return firstPaletteIndex;
-        case PadLight::loaded:   return firstPaletteIndex + 1;
-        case PadLight::selected: return firstPaletteIndex + 2;
-        case PadLight::playing:  return firstPaletteIndex + 3;
+        case machine::PadLight::off:      return 0;             // nero, voce di serie
+        case machine::PadLight::empty:    return firstPaletteIndex;
+        case machine::PadLight::loaded:   return firstPaletteIndex + 1;
+        case machine::PadLight::selected: return firstPaletteIndex + 2;
+        case machine::PadLight::playing:  return firstPaletteIndex + 3;
+        case machine::PadLight::muted:    return firstPaletteIndex + 4;
     }
     return 0;
 }
@@ -57,8 +59,8 @@ juce::MidiMessage Push2Panel::sysexFor (const std::vector<std::uint8_t>& b)
 Push2Panel::Push2Panel (juce::Typeface::Ptr displayFont)
     : font (std::move (displayFont))
 {
-    lights.fill (PadLight::empty);
-    onScreen.fill (PadLight::off);
+    lights.fill (machine::PadLight::empty);
+    onScreen.fill (machine::PadLight::off);
 
     display = std::make_unique<Push2Display>();
     reconnect();
@@ -164,7 +166,7 @@ void Push2Panel::lightAllButtons()
     // Tutti i tasti che la macchina usa stanno accesi smorti, cosi' si vede al
     // buio cosa c'e'; chi li accende forte e' la pagina aperta.
     for (const auto& b : control::buttons())
-        setButtonLight (b.number, b.rgb ? paletteIndexFor (PadLight::loaded) : 24);
+        setButtonLight (b.number, b.rgb ? paletteIndexFor (machine::PadLight::loaded) : 24);
 }
 
 void Push2Panel::setButtonLight (int cc, int value)
@@ -178,7 +180,7 @@ void Push2Panel::setButtonLight (int cc, int value)
         output->sendMessageNow (juce::MidiMessage::controllerEvent (1, cc, juce::jlimit (0, 127, value)));
 }
 
-void Push2Panel::setPadLight (machine::PadRef p, PadLight l)
+void Push2Panel::setPadLight (machine::PadRef p, machine::PadLight l)
 {
     const int i = machine::drumIndex (p);
     if (! juce::isPositiveAndBelow (i, machine::numDrums))
@@ -221,7 +223,7 @@ void Push2Panel::refreshLeds (bool everything)
         for (int col = 0; col < 8; ++col)
         {
             const auto p = machine::padForCell (row, col, bankGroup);
-            PadLight want;
+            machine::PadLight want;
             {
                 const juce::ScopedLock sl (lock);
                 want = lights[(size_t) machine::drumIndex (p)];
