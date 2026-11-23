@@ -4,6 +4,19 @@
 
 #include <juce_audio_basics/juce_audio_basics.h>
 
+// Come risponde il pad quando lo si batte, come sulla macchina vera.
+enum class PlayMode
+{
+    unaVolta,       // parte e arriva in fondo, mollare il pad non lo ferma
+    tenuto,         // suona finche' si tiene premuto
+    giro,           // gira su se stesso finche' non si ripreme il pad
+    avviaFerma      // il primo colpo lo avvia, il secondo lo ferma
+};
+
+// Il nome del modo, in italiano: da passare a lang::t per il display.
+juce::String playModeName (PlayMode);
+PlayMode playModeFromName (const juce::String&);
+
 // Un suono dei 128 della macchina, con i parametri che aveva l'originale.
 struct Drum
 {
@@ -19,6 +32,7 @@ struct Drum
     int end = 0;                 // ultimo campione, 0 = fino in fondo
     bool reverse = false;
     int muteGroup = 0;           // 0 = nessuno; i suoni dello stesso gruppo si tagliano
+    PlayMode playMode = PlayMode::unaVolta;
 
     bool loaded() const { return sample.getNumSamples() > 0; }
 

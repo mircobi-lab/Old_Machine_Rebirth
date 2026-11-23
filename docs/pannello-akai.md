@@ -30,7 +30,7 @@ pannello, e se c'e' gia'.
 | UNMUTE ALL (shift) | li fa suonare tutti | SHIFT + MUTE | **fatto** |
 | NOTE REPEAT | il pad ribatte da solo a tempo | tasto REPEAT | **fatto** |
 | TRIPLET (shift) | ribatte in terzina | colonna della quantizzazione, valori T | **fatto** |
-| LOOP | il campione gira su se stesso | pagina SUONO | manca |
+| LOOP | il campione gira su se stesso | pagina SUONO, settimo rotativo, modo GIRO | fatto |
 | REVERSE (shift) | lo suona all'indietro | settimo rotativo | **fatto** |
 | CHOP | taglia il campione in fette | pagina FETTE, tasto F1 SPACCA | fatto |
 | NOTE ON (shift) | le fette suonano come note | pagina FETTE, tasto RIEMPI | fatto: le fette finiscono sui pad di fila |
@@ -208,3 +208,21 @@ dell'audio legge fino a quel numero e quello che c'e' oltre non lo guarda
 nemmeno. Le modifiche che spostano o togliono roba (cancella, raddoppia,
 dimezza) alzano una bandiera e il filo dell'audio salta quel blocco: un buco di
 pochi millesimi che non si sente.
+
+## Come risponde ogni pad
+
+Settimo rotativo della pagina SUONO, uno per pad, come sulla macchina vera:
+
+| Modo | Cosa fa |
+|---|---|
+| UNA VOLTA | parte e arriva in fondo, mollare il pad non lo ferma |
+| TENUTO | suona finche' si tiene premuto |
+| GIRO | gira su se stesso dentro il ritaglio, il secondo colpo lo ferma |
+| AVVIA FERMA | il primo colpo lo avvia, il secondo lo ferma |
+
+Il modo resta nella scena insieme agli altri parametri del pad. Quando un suono
+si ferma prima della fine non si spegne di botto: ha cinque millesimi di coda,
+altrimenti fa clic.
+
+Il rovescio, che prima stava sul settimo rotativo, e' passato sul tasto
+ROVESCIO sotto il display: e' un interruttore, non un valore da girare.

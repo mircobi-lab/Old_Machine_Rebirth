@@ -71,64 +71,25 @@ void drawWave (juce::Graphics& g, juce::Rectangle<int> area, const WaveView& vie
         return (float) inner.getX() + (float) (juce::jlimit (0.0, 1.0, f) * inner.getWidth());
     };
 
-    // Solo il profilo: due righe, quella dei massimi e quella dei minimi,
-    // disegnate come un contorno invece che riempite. Il pezzo fuori dal
-    // ritaglio resta smorto, cosi' si capisce che c'e' ancora ma che non
-    // suona.
-    const auto buildOutline = [&] (double fromFraction, double toFraction, juce::Path& path)
+    // Il campione pieno, colonna per colonna: il pezzo dentro il ritaglio e'
+    // acceso, quello fuori resta smorto, cosi' si vede che c'e' ancora ma che
+    // non suona.
+    for (int x = 0; x < inner.getWidth(); ++x)
     {
-        bool started = false;
+        const double f = (double) x / (double) juce::jmax (1, inner.getWidth() - 1);
+        const int column = juce::jlimit (0, columns - 1, (int) (f * columns));
 
-        const auto addPoint = [&] (float x, float y)
-        {
-            if (! started)
-            {
-                path.startNewSubPath (x, y);
-                started = true;
-            }
-            else
-                path.lineTo (x, y);
-        };
+        const bool inside = f >= view.startFraction && f <= view.endFraction;
+        g.setColour (inside ? view.colour : view.colour.withAlpha (0.22f));
 
-        const int width = inner.getWidth();
+        const float low = view.lows[(size_t) column];
+        const float high = view.highs[(size_t) column];
+        const float top = middle - high * half;
+        const float bottom = middle - low * half;
 
-        // prima il bordo di sopra da sinistra a destra, poi quello di sotto
-        // tornando indietro: cosi' il profilo si chiude ed e' una riga sola
-        for (int x = 0; x < width; ++x)
-        {
-            const double f = (double) x / (double) juce::jmax (1, width - 1);
-            if (f < fromFraction || f > toFraction)
-                continue;
-
-            const int column = juce::jlimit (0, columns - 1, (int) (f * columns));
-            addPoint ((float) (inner.getX() + x), middle - view.highs[(size_t) column] * half);
-        }
-
-        for (int x = width - 1; x >= 0; --x)
-        {
-            const double f = (double) x / (double) juce::jmax (1, width - 1);
-            if (f < fromFraction || f > toFraction)
-                continue;
-
-            const int column = juce::jlimit (0, columns - 1, (int) (f * columns));
-            addPoint ((float) (inner.getX() + x), middle - view.lows[(size_t) column] * half);
-        }
-
-        if (started)
-            path.closeSubPath();
-    };
-
-    juce::Path before, inside, after;
-    buildOutline (0.0, view.startFraction, before);
-    buildOutline (view.startFraction, view.endFraction, inside);
-    buildOutline (view.endFraction, 1.0, after);
-
-    g.setColour (view.colour.withAlpha (0.25f));
-    g.strokePath (before, juce::PathStrokeType (1.0f));
-    g.strokePath (after, juce::PathStrokeType (1.0f));
-
-    g.setColour (view.colour);
-    g.strokePath (inside, juce::PathStrokeType (1.2f));
+        g.drawVerticalLine (inner.getX() + x, juce::jmin (top, middle - 0.5f),
+                            juce::jmax (bottom, middle + 0.5f));
+    }
 
     // I tagli proposti dalle fette: righe verticali bianche smorte, numerate
     // quando c'e' spazio.

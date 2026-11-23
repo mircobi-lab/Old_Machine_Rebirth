@@ -24,7 +24,14 @@ public:
     void process (juce::AudioBuffer<float>&);
 
     void trigger (int drumIndex, float velocity);     // velocity 0..1
+
+    // Il pad e' stato mollato: conta solo per i suoni tenuti, gli altri
+    // tirano dritto fino in fondo.
+    void release (int drumIndex);
+
     void stopAll();
+
+    bool isSounding (int drumIndex) const;
 
     Drum& drum (int index);
     const Drum& drum (int index) const;
@@ -65,11 +72,16 @@ private:
         float gain = 0.0f;
         std::uint32_t startedAt = 0;
         bool active = false;
+        bool looping = false;
+        int fadeOut = 0;          // campioni che restano prima di spegnersi
     };
 
+    // velocity negativa vuol dire "pad mollato"
     struct Hit { int drum = 0; float velocity = 0.0f; };
 
     void startVoice (int drumIndex, float velocity);
+    void releaseVoices (int drumIndex);
+    static constexpr int fadeLength = 220;     // cinque millesimi a 44100
     double incrementFor (const Drum&) const;
 
     std::array<Drum, machine::numDrums> drums;

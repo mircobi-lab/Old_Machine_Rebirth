@@ -257,6 +257,9 @@ void Machine::padUp (PadRef p)
     const int index = drumIndex (p);
     held[(size_t) index] = false;
 
+    // il pad mollato conta solo per i suoni tenuti: il campionatore sa quali
+    sampler.release (index);
+
     if (repeatRunning.load() && repeatDrum.load() == index)
     {
         bool anyHeld = false;
@@ -456,6 +459,12 @@ void Machine::command (const control::Control& c, bool down)
                 }
                 else if (c.index == 2)
                     undo();
+                else if (c.index == 3)
+                {
+                    auto& d = sampler.drum (drumIndex (selected));
+                    d.reverse = ! d.reverse;
+                    setMessage (d.reverse ? "ROVESCIO" : "DRITTO");
+                }
                 else
                     setMessage ("");
             }
@@ -933,8 +942,12 @@ void Machine::changeParameter (int which, int steps)
         case 6:
             if (steps != 0)
             {
-                d.reverse = steps > 0;
-                setMessage (d.reverse ? "ROVESCIO" : "DRITTO");
+                // come risponde il pad: una volta, tenuto, a giro, avvia e ferma
+                const int modes = 4;
+                int which = (int) d.playMode + (steps > 0 ? 1 : -1);
+                which = juce::jlimit (0, modes - 1, which);
+                d.playMode = (PlayMode) which;
+                setMessage ("MODO " + playModeName (d.playMode));
             }
             break;
 
@@ -1238,6 +1251,7 @@ juce::StringArray Machine::softKeyLabels() const
         labels.set (0, lang::t ("ASCOLTA"));
         labels.set (1, lang::t ("IN LIBRERIA"));
         labels.set (2, lang::t ("ANNULLA"));
+        labels.set (3, lang::t ("ROVESCIO"));
     }
     else if (page == control::Command::pageStep)
     {
@@ -1476,13 +1490,27 @@ juce::StringArray Machine::screenLines() const
         lines.add (lang::t ("INGRESSO") + "|"
                        + juce::String (juce::roundToInt (rec.inputLevel() * 100.0f)));
     }
+    else if (page == control::Command::pageSound)
+    {
+        // nella pagina SUONO i campi sono gli otto rotativi, in ordine
+        lines.add (lang::t ("LIVELLO") + "|" + juce::String (juce::roundToInt (d.level * 100.0f)));
+        lines.add (lang::t ("ACCORDA") + "|" + juce::String (d.tuneSemitones > 0 ? "+" : "")
+                       + juce::String (d.tuneSemitones));
+        lines.add (lang::t ("PANORAMA") + "|" + juce::String (juce::roundToInt (d.pan * 100.0f)));
+        lines.add (lang::t ("INIZIO") + "|" + juce::String (d.start));
+        lines.add (lang::t ("FINE") + "|" + juce::String (d.lastSample()));
+        lines.add (lang::t ("GRUPPO") + "|" + juce::String (d.muteGroup));
+        lines.add (lang::t ("MODO") + "|" + lang::t (playModeName (d.playMode)));
+        lines.add (lang::t ("FAMIGLIA") + "|" + lang::t (sound::name (d.kind)));
+        return lines;
+    }
     else
     {
         lines.add (lang::t ("LIVELLO") + "|" + juce::String (juce::roundToInt (d.level * 100.0f)));
         lines.add (lang::t ("ACCORDA") + "|" + juce::String (d.tuneSemitones > 0 ? "+" : "")
                        + juce::String (d.tuneSemitones));
         lines.add (lang::t ("PANORAMA") + "|" + juce::String (juce::roundToInt (d.pan * 100.0f)));
-        lines.add (lang::t ("FAMIGLIA") + "|" + lang::t (sound::name (d.kind)));
+        lines.add (lang::t ("MODO") + "|" + lang::t (playModeName (d.playMode)));
     }
     lines.add (lang::t ("TEMPO") + "|" + juce::String (juce::roundToInt (bpm)));
     lines.add (lang::t ("STATO") + "|" + lang::phrase (message.isEmpty() ? juce::String ("PRONTO") : message));

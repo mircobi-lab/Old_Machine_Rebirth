@@ -49,6 +49,7 @@ public:
           << d.name << "|" << juce::String (d.level, 3) << "|" << d.tuneSemitones << "|"
           << juce::String (d.pan, 3) << "|" << d.start << "|" << d.end << "|"
           << d.muteGroup << "|" << (int) d.reverse << "|" << sound::indexOf (d.kind) << "|"
+          << (int) d.playMode << "|"
           << m.engine().loadedCount() << "|";
 
         // le spie dei tasti: ci stanno dentro i modi che non si vedono

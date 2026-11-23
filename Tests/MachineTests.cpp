@@ -150,8 +150,11 @@ public:
             turn (1, 3);
             expectEquals (m.engine().drum (0).tuneSemitones, 3);
 
+            // il settimo rotativo sceglie come risponde il pad; il rovescio
+            // sta sul tasto sotto il display, che e' un interruttore
             turn (6, 1);
-            expect (m.engine().drum (0).reverse, "il settimo rotativo rovescia il suono");
+            expect (m.engine().drum (0).playMode == PlayMode::tenuto,
+                    "il settimo rotativo non cambia il modo del pad");
         }
 
         beginTest ("il tempo si cambia e resta nei limiti");

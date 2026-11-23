@@ -133,6 +133,7 @@ bool saveScene (const juce::File& folder, const machine::Machine& m, juce::Strin
         parts.add (juce::String (d.muteGroup));
         parts.add (juce::String (state.mutes[(size_t) i] ? 1 : 0));
         parts.add (juce::String (sound::indexOf (d.kind)));
+        parts.add (juce::String ((int) d.playMode));
         parts.add (file.getFileName());
         lines.add (parts.joinIntoString (" "));
     }
@@ -192,6 +193,13 @@ bool loadScene (const juce::File& folder, machine::Machine& m, juce::String& err
             {
                 item.drum.kind = sound::kindFromIndex (parts[10].getIntValue());
                 firstNamePart = 11;
+
+                // il modo e' arrivato dopo ancora
+                if (parts.size() >= 13 && parts[11].containsOnly ("0123456789"))
+                {
+                    item.drum.playMode = (PlayMode) juce::jlimit (0, 3, parts[11].getIntValue());
+                    firstNamePart = 12;
+                }
             }
 
             // il nome del file e' tutto quello che resta, spazi compresi

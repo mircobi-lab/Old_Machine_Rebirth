@@ -21,7 +21,7 @@ Qui sono il doppio. Quelli che in una pagina non servono restano spenti.
 | CAMPIONA | ARMA | REGISTRA | STOP | ASCOLTA | RICAMPIONA | IN LIBRERIA | ANNULLA |
 | FETTE | SPACCA | PULISCI AI | PULISCI MP3 | ANNULLA | RIEMPI | FETTE + | FETTE - |
 | SEQUENZA | REC SEQ | SOVRAINCIDI | CORREGGI | CANCELLA SEQ | NUOVA SEQ | RADDOPPIA | DIMEZZA |
-| SUONO | ASCOLTA | IN LIBRERIA | ANNULLA | | | | |
+| SUONO | ASCOLTA | IN LIBRERIA | ANNULLA | ROVESCIO | | | |
 | PASSO | CANCELLA SUONO | PASSI - | PASSI + | CORREGGI | | | |
 | DISCO | SALVA SCENA | APRI SCENA | IN LIBRERIA | LIBRERIA | | | |
 
@@ -36,7 +36,7 @@ in cima.
 |---|---|---|
 | Primo a sinistra | 14 | Tempo |
 | Secondo a sinistra | 15 | Swing |
-| Gli otto in fila | 71-78 | Gli otto parametri scritti sul display |
+| Gli otto in fila | 71-78 | Gli otto parametri scritti sul display. Nella pagina SUONO sono livello, accordatura, panorama, inizio, fine, gruppo, modo e famiglia, nello stesso ordine in cui stanno sul display |
 | Master | 79 | Volume generale |
 
 Toccarli, senza girarli, serve a prendere il parametro senza cambiarlo.
@@ -180,8 +180,7 @@ scelto: la fascia centrale e' l'onda, i campi dei rotativi si stringono sotto.
 - nella pagina FETTE si vedono anche **i tagli che RIEMPI farebbe adesso**,
   numerati fino a sedici. Il primo rotativo cambia quante fette sono, e le
   righe si spostano mentre lo si gira: si decide guardando, prima di premere
-- l'onda e' solo il **profilo**, non il pieno: due righe, quella dei massimi e
-  quella dei minimi, del colore della famiglia del suono
+- l'onda e' piena, del colore della famiglia del suono
 - il tasto **ASCOLTA** (F1 nella pagina SUONO, F8 nelle pagine FETTE e
   CAMPIONA) fa sentire il campione del pad scelto senza scriverlo nella
   sequenza, e un segno verde corre sull'onda mentre suona: si muove il ritaglio

@@ -92,12 +92,57 @@ void SampleEngine::startVoice (int drumIndex, float velocity)
                 chosen = &v;
     }
 
+    // i modi che si fermano al secondo colpo: se sta gia' suonando, questo
+    // colpo lo spegne invece di farne partire un altro
+    if (d.playMode == PlayMode::giro || d.playMode == PlayMode::avviaFerma)
+        for (const auto& v : voices)
+            if (v.active && v.drum == drumIndex && v.fadeOut == 0)
+            {
+                releaseVoices (drumIndex);
+                return;
+            }
+
     chosen->drum = drumIndex;
     chosen->increment = incrementFor (d);
     chosen->position = d.reverse ? (double) (d.lastSample() - 1) : (double) d.start;
     chosen->gain = velocity * velocity * d.level;   // la velocity scalda in modo naturale
     chosen->startedAt = ++counter;
     chosen->active = true;
+    chosen->looping = d.playMode == PlayMode::giro;
+    chosen->fadeOut = 0;
+}
+
+void SampleEngine::releaseVoices (int drumIndex)
+{
+    for (auto& v : voices)
+        if (v.active && v.drum == drumIndex && v.fadeOut == 0)
+        {
+            v.looping = false;
+            v.fadeOut = fadeLength;      // una coda cortissima, se no fa clic
+        }
+}
+
+void SampleEngine::release (int drumIndex)
+{
+    if (! juce::isPositiveAndBelow (drumIndex, machine::numDrums))
+        return;
+
+    int start1, size1, start2, size2;
+    fifo.prepareToWrite (1, start1, size1, start2, size2);
+    if (size1 > 0)
+        queue[(size_t) start1] = { drumIndex, -1.0f };
+    else if (size2 > 0)
+        queue[(size_t) start2] = { drumIndex, -1.0f };
+    fifo.finishedWrite (size1 + size2);
+}
+
+bool SampleEngine::isSounding (int drumIndex) const
+{
+    for (const auto& v : voices)
+        if (v.active && v.drum == drumIndex)
+            return true;
+
+    return false;
 }
 
 void SampleEngine::process (juce::AudioBuffer<float>& buffer)
@@ -107,10 +152,22 @@ void SampleEngine::process (juce::AudioBuffer<float>& buffer)
     // i colpi arrivati da fuori
     int start1, size1, start2, size2;
     fifo.prepareToRead (queueSize, start1, size1, start2, size2);
+    const auto handle = [this] (const Hit& hit)
+    {
+        if (hit.velocity < 0.0f)
+        {
+            // pad mollato: si ferma solo quello che deve stare tenuto
+            if (drums[(size_t) hit.drum].playMode == PlayMode::tenuto)
+                releaseVoices (hit.drum);
+        }
+        else
+            startVoice (hit.drum, hit.velocity);
+    };
+
     for (int i = 0; i < size1; ++i)
-        startVoice (queue[(size_t) (start1 + i)].drum, queue[(size_t) (start1 + i)].velocity);
+        handle (queue[(size_t) (start1 + i)]);
     for (int i = 0; i < size2; ++i)
-        startVoice (queue[(size_t) (start2 + i)].drum, queue[(size_t) (start2 + i)].velocity);
+        handle (queue[(size_t) (start2 + i)]);
     fifo.finishedRead (size1 + size2);
 
     const juce::ScopedTryLock sl (loadLock);
@@ -150,20 +207,48 @@ void SampleEngine::process (juce::AudioBuffer<float>& buffer)
 
         for (int i = 0; i < numSamples; ++i)
         {
-            const int index = (int) v.position;
+            int index = (int) v.position;
+
             if (index < 0 || index >= last - 1)
             {
-                v.active = false;
-                break;
+                // il suono che gira ricomincia dal ritaglio invece di spegnersi
+                if (v.looping)
+                {
+                    v.position = d.reverse ? (double) (last - 2) : (double) d.start;
+                    index = (int) v.position;
+
+                    if (index < 0 || index >= last - 1)
+                    {
+                        v.active = false;
+                        break;
+                    }
+                }
+                else
+                {
+                    v.active = false;
+                    break;
+                }
             }
 
             const float frac = (float) (v.position - (double) index);
+
+            // la coda corta quando il pad viene mollato o fermato
+            float fade = 1.0f;
+            if (v.fadeOut > 0)
+            {
+                fade = (float) v.fadeOut / (float) fadeLength;
+                if (--v.fadeOut <= 0)
+                {
+                    v.active = false;
+                    break;
+                }
+            }
 
             for (int ch = 0; ch < numChannels; ++ch)
             {
                 const auto* in = source.getReadPointer (juce::jmin (ch, sourceChannels - 1));
                 const float s = in[index] + frac * (in[index + 1] - in[index]);
-                buffer.addSample (ch, i, s * (ch == 0 ? leftGain : rightGain));
+                buffer.addSample (ch, i, s * fade * (ch == 0 ? leftGain : rightGain));
             }
 
             v.position += d.reverse ? -v.increment : v.increment;
