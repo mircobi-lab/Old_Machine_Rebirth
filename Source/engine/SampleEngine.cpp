@@ -124,6 +124,11 @@ void SampleEngine::process (juce::AudioBuffer<float>& buffer)
 
     int active = 0;
 
+    // la voce piu' giovane fra quelle che suonano: e' quella che si segue col
+    // segno sull'onda
+    int newest = -1;
+    std::uint32_t newestAge = 0;
+
     for (auto& v : voices)
     {
         if (! v.active)
@@ -165,10 +170,30 @@ void SampleEngine::process (juce::AudioBuffer<float>& buffer)
         }
 
         if (v.active)
+        {
             ++active;
+
+            if (newest < 0 || v.startedAt > newestAge)
+            {
+                newest = v.drum;
+                newestAge = v.startedAt;
+
+                const int length = juce::jmax (1, d.sample.getNumSamples());
+                shownPosition.store ((float) juce::jlimit (0.0, 1.0, v.position / (double) length));
+            }
+        }
     }
 
+    shownDrum.store (newest);
     playing.store (active);
+}
+
+double SampleEngine::positionOf (int drumIndex) const
+{
+    if (shownDrum.load() != drumIndex)
+        return -1.0;
+
+    return (double) shownPosition.load();
 }
 
 bool SampleEngine::loadBuffer (int drumIndex, const juce::String& name,

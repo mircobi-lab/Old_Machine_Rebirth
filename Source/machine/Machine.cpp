@@ -419,6 +419,8 @@ void Machine::command (const control::Control& c, bool down)
                 }
                 else if (c.index == 6)
                     undo();
+                else if (c.index == 7)
+                    auditionSelected();
                 else
                     setMessage ("");
             }
@@ -441,6 +443,21 @@ void Machine::command (const control::Control& c, bool down)
                             setMessage ("BATTUTE " + juce::String (seq.bars())); break;
                     default: break;
                 }
+            }
+            else if (page == C::pageSound)
+            {
+                if (c.index == 0)
+                    auditionSelected();
+                else if (c.index == 1)
+                {
+                    if (onToLibrary)
+                        onToLibrary();
+                    setMessage ("IN LIBRERIA");
+                }
+                else if (c.index == 2)
+                    undo();
+                else
+                    setMessage ("");
             }
             else if (page == C::pageStep)
             {
@@ -516,6 +533,8 @@ void Machine::command (const control::Control& c, bool down)
                     slices = slicer::nextCount (slices, c.index == 5 ? 1 : -1);
                     setMessage ("FETTE " + juce::String (slices));
                 }
+                else if (c.index == 7)
+                    auditionSelected();
                 else
                     setMessage ("");
             }
@@ -1006,6 +1025,21 @@ void Machine::setMasterGain (float gain)
     changed();
 }
 
+void Machine::auditionSelected()
+{
+    const int index = drumIndex (selected);
+    if (! sampler.drum (index).loaded())
+    {
+        setMessage ("PAD VUOTO");
+        changed();
+        return;
+    }
+
+    sampler.trigger (index, fullLevel ? 1.0f : 0.9f);
+    setMessage ("ASCOLTA " + sampler.drum (index).name);
+    changed();
+}
+
 Machine::WaveMarkers Machine::waveMarkers() const
 {
     using C = control::Command;
@@ -1033,6 +1067,7 @@ Machine::WaveMarkers Machine::waveMarkers() const
         for (int i = 1; i < slices; ++i)
             w.slices.push_back ((double) i / (double) slices);
 
+    w.playFraction = sampler.positionOf (w.drumIndex);
     w.caption = juce::String (length / juce::jmax (1.0, d.sourceRate), 2) + "S";
     if (page == C::pageChop)
         w.caption = juce::String (slices) + " " + lang::t ("FETTE") + "  " + w.caption;
@@ -1114,6 +1149,7 @@ juce::StringArray Machine::softKeyLabels() const
         labels.set (4, lang::t ("RICAMPIONA"));
         labels.set (5, lang::t ("IN LIBRERIA"));
         labels.set (6, lang::t ("ANNULLA"));
+        labels.set (7, lang::t ("ASCOLTA"));
     }
     else if (page == control::Command::pageSequence)
     {
@@ -1125,6 +1161,12 @@ juce::StringArray Machine::softKeyLabels() const
         labels.set (5, lang::t ("RADDOPPIA"));
         labels.set (6, lang::t ("DIMEZZA"));
         labels.set (7, lang::t ("BATTUTE"));
+    }
+    else if (page == control::Command::pageSound)
+    {
+        labels.set (0, lang::t ("ASCOLTA"));
+        labels.set (1, lang::t ("IN LIBRERIA"));
+        labels.set (2, lang::t ("ANNULLA"));
     }
     else if (page == control::Command::pageStep)
     {
@@ -1149,6 +1191,7 @@ juce::StringArray Machine::softKeyLabels() const
         labels.set (4, lang::t ("RIEMPI"));
         labels.set (5, lang::t ("FETTE +"));
         labels.set (6, lang::t ("FETTE -"));
+        labels.set (7, lang::t ("ASCOLTA"));
     }
 
     return labels;

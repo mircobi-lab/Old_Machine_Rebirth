@@ -117,7 +117,7 @@ MainComponent::MainComponent()
     refreshSurfaces();
 
     setSize (1100, 700);
-    startTimerHz (10);
+    startTimerHz (20);
 }
 
 MainComponent::~MainComponent()
@@ -317,6 +317,7 @@ void MainComponent::refreshWave()
     view.startFraction = markers.startFraction;
     view.endFraction = markers.endFraction;
     view.slices = markers.slices;
+    view.playFraction = markers.playFraction;
     view.colour = sound::colourSelected (markers.kind);
     view.caption = markers.caption;
 
@@ -402,6 +403,10 @@ void MainComponent::timerCallback()
     t << "    " << lang::t ("VOCI") << " " << mpc.engine().activeVoices() << "/" << SampleEngine::numVoices;
 
     mpc.checkRecorder();
+
+    // il segno che corre sull'onda si muove da solo mentre il campione suona,
+    // quindi l'onda va rinfrescata col tempo e non solo quando cambia qualcosa
+    refreshWave();
 
     const auto work = busyMessage();
     if (work.isNotEmpty())

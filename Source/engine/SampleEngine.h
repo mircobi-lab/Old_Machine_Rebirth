@@ -34,6 +34,10 @@ public:
     // l'onda per sapere quando rifare i conti, invece di rifarli 20 volte al
     // secondo.
     int loadVersion() const { return loads.load(); }
+
+    // Dove sta suonando l'ultimo colpo di quel pad, come frazione da 0 a 1.
+    // -1 se quel pad non sta suonando. Serve al segno che corre sull'onda.
+    double positionOf (int drumIndex) const;
     int activeVoices() const { return playing.load(); }
 
     // Carica un file sul pad. Vero se c'e' riuscito.
@@ -82,4 +86,6 @@ private:
     std::uint32_t counter = 0;
     std::atomic<int> playing { 0 };
     std::atomic<int> loads { 0 };
+    std::atomic<int> shownDrum { -1 };
+    std::atomic<float> shownPosition { 0.0f };
 };

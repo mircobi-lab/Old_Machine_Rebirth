@@ -21,6 +21,7 @@ Qui sono il doppio. Quelli che in una pagina non servono restano spenti.
 | CAMPIONA | ARMA | REGISTRA | STOP | ASCOLTA | RICAMPIONA | IN LIBRERIA | ANNULLA |
 | FETTE | SPACCA | PULISCI AI | PULISCI MP3 | ANNULLA | RIEMPI | FETTE + | FETTE - |
 | SEQUENZA | REC SEQ | SOVRAINCIDI | CORREGGI | CANCELLA SEQ | NUOVA SEQ | RADDOPPIA | DIMEZZA |
+| SUONO | ASCOLTA | IN LIBRERIA | ANNULLA | | | | |
 | PASSO | CANCELLA SUONO | PASSI - | PASSI + | CORREGGI | | | |
 | DISCO | SALVA SCENA | APRI SCENA | IN LIBRERIA | LIBRERIA | | | |
 
@@ -153,7 +154,12 @@ scelto: la fascia centrale e' l'onda, i campi dei rotativi si stringono sotto.
 - nella pagina FETTE si vedono anche **i tagli che RIEMPI farebbe adesso**,
   numerati fino a sedici. Il primo rotativo cambia quante fette sono, e le
   righe si spostano mentre lo si gira: si decide guardando, prima di premere
-- l'onda e' del colore della famiglia del suono, come il pad
+- l'onda e' solo il **profilo**, non il pieno: due righe, quella dei massimi e
+  quella dei minimi, del colore della famiglia del suono
+- il tasto **ASCOLTA** (F1 nella pagina SUONO, F8 nelle pagine FETTE e
+  CAMPIONA) fa sentire il campione del pad scelto senza scriverlo nella
+  sequenza, e un segno verde corre sull'onda mentre suona: si muove il ritaglio
+  e si risente, senza uscire dalla pagina
 - i picchi si calcolano una volta sola per campione, non venti volte al
   secondo: su un brano di un minuto sono due milioni e mezzo di campioni da
   scorrere. Il conto si rifa' solo quando cambia il pad scelto o il campione

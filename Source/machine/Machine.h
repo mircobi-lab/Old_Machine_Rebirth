@@ -57,12 +57,17 @@ public:
         int sampleVersion = 0;
         double startFraction = 0.0;
         double endFraction = 1.0;
+        double playFraction = -1.0;     // dove sta suonando, -1 se non suona
         std::vector<double> slices;
         sound::Kind kind = sound::Kind::generico;
         juce::String caption;
     };
 
     WaveMarkers waveMarkers() const;
+
+    // Fa sentire il campione del pad scelto senza scriverlo nella sequenza:
+    // serve per sentire il ritaglio mentre lo si muove.
+    void auditionSelected();
     bool buttonLit (const control::Control&) const;
     juce::StringArray screenLines() const;
     // Le etichette degli otto tasti sotto il display, che cambiano con la

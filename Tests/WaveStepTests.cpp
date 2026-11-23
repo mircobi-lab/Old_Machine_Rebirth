@@ -227,6 +227,53 @@ public:
             expectEquals (m.stepWindowStart(), 0, "la finestra e' andata sotto zero");
         }
 
+        beginTest ("l'ascolto fa suonare il campione e il segno corre sull'onda");
+        {
+            machine::Machine m;
+            m.prepare (rate);
+            press (m, page (control::Command::pageSound));
+
+            // fermo, il segno non c'e'
+            expect (m.waveMarkers().playFraction < 0.0, "il segno c'e' anche se non suona");
+
+            m.auditionSelected();
+
+            juce::AudioBuffer<float> buffer (2, 256);
+            m.process (buffer);
+            expect (buffer.getMagnitude (0, 256) > 0.01f, "l'ascolto non suona");
+
+            const auto first = m.waveMarkers().playFraction;
+            expect (first >= 0.0, "il segno non si vede mentre suona");
+
+            for (int i = 0; i < 10; ++i)
+            {
+                buffer.clear();
+                m.process (buffer);
+            }
+
+            expect (m.waveMarkers().playFraction > first, "il segno non si muove");
+
+            // il tasto sotto il display fa la stessa cosa
+            expectEquals (m.softKeyLabels()[0], juce::String ("ASCOLTA"));
+        }
+
+        beginTest ("l'ascolto non scrive niente nella sequenza");
+        {
+            machine::Machine m;
+            m.prepare (rate);
+
+            control::Control rec;
+            for (const auto& c : control::buttons())
+                if (c.command == control::Command::recordSequence)
+                    rec = c;
+
+            press (m, rec);
+            expect (m.sequencer().isRecording());
+
+            m.auditionSelected();
+            expectEquals (m.sequencer().eventCount(), 0, "l'ascolto e' finito nella sequenza");
+        }
+
         beginTest ("il display si disegna con l'onda e si puo' guardare");
         {
             machine::Machine m;
