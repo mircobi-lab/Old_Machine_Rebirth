@@ -1,0 +1,79 @@
+name: Build
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (macOS)
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache JUCE
+        uses: actions/cache@v4
+        with:
+          path: build-test/_deps
+          key: juce-test-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}
+
+      - name: Configura
+        run: cmake -S . -B build-test -G Xcode
+
+      - name: Compila i test
+        run: cmake --build build-test --target RebirthTests --config Debug -- -quiet
+
+      - name: Esegui i test
+        run: ctest --test-dir build-test -C Debug --output-on-failure
+
+  app:
+    name: App (macOS Intel x86_64)
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache JUCE
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: juce-app-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}
+
+      - name: Configura (x86_64, macOS 12+)
+        run: >
+          cmake -S . -B build -G Xcode
+          -DCMAKE_OSX_ARCHITECTURES=x86_64
+          -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
+
+      - name: Compila l'app
+        run: cmake --build build --target OldMachineRebirth --config Release -- -quiet
+
+      - name: Verifica architettura e icona
+        run: |
+          APP="build/OldMachineRebirth_artefacts/Release/Old Machine Rebirth.app"
+          BIN="$APP/Contents/MacOS/Old Machine Rebirth"
+          ARCHS=$(lipo -archs "$BIN")
+          echo "Architetture: $ARCHS"
+          test "$ARCHS" = "x86_64"
+          ICNS=$(ls "$APP/Contents/Resources/"*.icns | head -1)
+          test -n "$ICNS"
+          echo "Icona: $(basename "$ICNS")"
+
+      - name: Crea lo zip
+        run: |
+          cd build/OldMachineRebirth_artefacts/Release
+          ditto -c -k --keepParent "Old Machine Rebirth.app" "$GITHUB_WORKSPACE/Old-Machine-Rebirth-macOS-Intel.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Old-Machine-Rebirth-macOS-Intel
+          path: Old-Machine-Rebirth-macOS-Intel.zip
