@@ -96,9 +96,19 @@ cmake --build build --target OscTemplate
 
 ## Se non risponde
 
+- **due strade verso lo stesso telefono**: se il Mac e' attaccato al telefono col
+  cavo e insieme e' acceso il Wi-Fi, i messaggi possono prendere la strada
+  sbagliata e non arrivare mai, senza che nessuno dica niente. Spegni il Wi-Fi
+  sul Mac e lascia solo il cavo. E' il guasto che ci e' costato piu' tempo di
+  tutti: porte giuste, indirizzo giusto, firewall spento, e zero pacchetti
 - il Mac e il telefono devono stare sulla stessa rete: con l'access point del
   telefono, il Mac deve essere agganciato a quella rete
 - la prima volta macOS chiede se il programma puo' ricevere dalla rete: va detto
   di si', altrimenti la porta resta chiusa senza dirlo
 - la riga di stato in fondo alla finestra scrive porta di ascolto e di risposta:
   se dice OSC SPENTO, la porta era gia' occupata da un altro programma
+- per vedere se i messaggi arrivano davvero c'e' **Protokol**, di Hexler, che e'
+  gratis: si mette sulla stessa porta della macchina (con la macchina chiusa,
+  se no la porta e' occupata) e fa vedere riga per riga quello che entra, con
+  l'indirizzo di chi manda. Se Protokol non vede niente, il guasto e' prima del
+  programma; se vede le righe, il guasto e' dentro
