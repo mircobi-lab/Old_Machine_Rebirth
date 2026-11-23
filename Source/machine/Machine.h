@@ -4,6 +4,7 @@
 #include "engine/Chopper.h"
 #include "engine/Cleaner.h"
 #include "engine/Recorder.h"
+#include "engine/Slicer.h"
 #include "engine/SampleEngine.h"
 #include "machine/PadGrid.h"
 
@@ -69,6 +70,16 @@ public:
     // riempito.
     int placeSlices (const std::vector<chopper::Slice>&);
 
+    // Le fette una dietro l'altra a partire dal pad scelto: e' quello che
+    // serve per i mash up, un brano su un banco e un altro sul banco dopo.
+    int placeFrom (PadRef start, const std::vector<chopper::Slice>&);
+
+    // Taglia il campione che sta sul pad scelto e lo sparge sui pad che
+    // seguono. Restituisce quanti pad ha riempito.
+    int fillFromSelected();
+
+    int sliceCount() const { return slices; }
+
     // Rimette sul pad il campione ripulito, tenendo da parte quello di prima
     // per il tasto ANNULLA.
     bool applyCleanedSample (int drumIndex, const juce::AudioBuffer<float>&,
@@ -76,8 +87,31 @@ public:
 
     int selectedDrumIndex() const { return drumIndex (selected); }
 
+    // Lo stato che non sta nei pad, quello che va salvato con la scena.
+    struct State
+    {
+        double bpm = 120.0;
+        int quantise = 3;
+        int bankGroup = 0;
+        int selectedPad = 0;        // indice del suono
+        float masterGain = 0.8f;
+        int slices = 16;
+        std::array<bool, numDrums> mutes {};
+    };
+
+    State snapshot() const;
+    void restore (const State&);
+
+    // Svuota tutti i pad: serve prima di aprire una scena, cosi' non restano
+    // in giro i suoni di quella di prima.
+    void clearAllPads();
+
+    void setMessageFromOutside (const juce::String& text) { setMessage (text); changed(); }
+
     std::function<void()> onChanged;          // qualcosa e' cambiato: ridisegna
     std::function<void()> onChopRequested;    // spacca un brano in fette
+    std::function<void()> onFillRequested;    // chiedi un file lungo da tagliare a fette uguali
+    std::function<void()> onSaveScene, onOpenScene, onToLibrary, onBrowseLibrary;
     std::function<void (cleaner::Preset)> onCleanRequested;  // pulisci il campione del pad
 
 private:
@@ -96,6 +130,7 @@ private:
     SampleEngine sampler;
     Recorder rec;
     int recordings = 0;
+    int slices = 16;                    // in quante fette taglia RIEMPI
 
     PadRef selected { 0, 1 };
     int group = 0;                      // 0 = A..D, 1 = E..H

@@ -2,6 +2,7 @@
 
 #include "control/OscSurface.h"
 #include "control/Push2Panel.h"
+#include "machine/Library.h"
 #include "machine/Machine.h"
 #include "ui/Lang.h"
 #include "ui/MBStudioLookAndFeel.h"
@@ -42,6 +43,12 @@ private:
     void chooseFileToChop();
     void runChop (const juce::File&);
     void runClean (cleaner::Preset);
+    void chooseFileToFill();
+    void askSceneName();
+    void saveSceneAs (const juce::String& name);
+    void chooseSceneToOpen();
+    void putSelectedInLibrary();
+    void browseLibrary();
     void setBusy (juce::String);
     juce::String busyMessage() const;
     void showOscSettings();
@@ -60,7 +67,7 @@ private:
     juce::TextButton audioButton { "AUDIO" }, bankButton { "BANCHI A-D" },
                      oscButton { "OSC" }, loadButton { "CARICA" },
                      chopButton { "SPACCA" }, cleanButton { "PULISCI" },
-                     langButton { "ITA" };
+                     langButton { "ITA" }, sceneButton { "SCENA" };
 
     // L'analisi di un brano intero dura: va fatta da parte, non nel filo dei
     // messaggi, altrimenti la macchina resta ferma mentre lavora.
@@ -73,5 +80,6 @@ private:
     std::unique_ptr<Push2Panel> push;
     std::unique_ptr<OscSurface> osc;
     std::unique_ptr<juce::FileChooser> chooser;
+    std::unique_ptr<juce::AlertWindow> prompt;
     std::optional<machine::PadRef> mousePad;
 };

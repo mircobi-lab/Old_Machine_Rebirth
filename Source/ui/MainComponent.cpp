@@ -37,6 +37,25 @@ MainComponent::MainComponent()
     loadButton.onClick = [this] { loadOntoSelected(); };
     addAndMakeVisible (loadButton);
 
+    sceneButton.onClick = [this]
+    {
+        juce::PopupMenu m;
+        m.addItem (1, lang::t ("SALVA SCENA"));
+        m.addItem (2, lang::t ("APRI SCENA"));
+        m.addSeparator();
+        m.addItem (3, lang::t ("IN LIBRERIA"));
+        m.addItem (4, lang::t ("LIBRERIA"));
+        m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (sceneButton),
+                         [this] (int choice)
+        {
+            if (choice == 1) askSceneName();
+            if (choice == 2) chooseSceneToOpen();
+            if (choice == 3) putSelectedInLibrary();
+            if (choice == 4) browseLibrary();
+        });
+    };
+    addAndMakeVisible (sceneButton);
+
     langButton.onClick = [this] { cycleLanguage(); };
     addAndMakeVisible (langButton);
 
@@ -59,6 +78,11 @@ MainComponent::MainComponent()
 
     mpc.onChopRequested = [this] { chooseFileToChop(); };
     mpc.onCleanRequested = [this] (cleaner::Preset p) { runClean (p); };
+    mpc.onFillRequested = [this] { chooseFileToFill(); };
+    mpc.onSaveScene = [this] { askSceneName(); };
+    mpc.onOpenScene = [this] { chooseSceneToOpen(); };
+    mpc.onToLibrary = [this] { putSelectedInLibrary(); };
+    mpc.onBrowseLibrary = [this] { browseLibrary(); };
 
     mpc.onChanged = [this]
     {
@@ -187,6 +211,7 @@ void MainComponent::retranslate()
     loadButton.setButtonText (lang::t ("CARICA"));
     chopButton.setButtonText (lang::t ("SPACCA"));
     cleanButton.setButtonText (lang::t ("PULISCI"));
+    sceneButton.setButtonText (lang::t ("SCENA"));
 }
 
 juce::File MainComponent::oscSettingsFile()
@@ -389,6 +414,126 @@ void MainComponent::chooseFileToChop()
         const auto file = fc.getResult();
         if (file != juce::File())
             runChop (file);
+    });
+}
+
+void MainComponent::chooseFileToFill()
+{
+    chooser = std::make_unique<juce::FileChooser> (
+        lang::t ("RIEMPI") + ": " + lang::t ("CARICA"),
+        juce::File::getSpecialLocation (juce::File::userMusicDirectory),
+        "*.wav;*.aif;*.aiff;*.flac;*.mp3");
+
+    chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                          [this] (const juce::FileChooser& fc)
+    {
+        const auto file = fc.getResult();
+        if (file == juce::File())
+            return;
+
+        // il file lungo va prima sul pad scelto, poi si taglia da li'
+        if (mpc.engine().loadFile (mpc.selectedDrumIndex(), file))
+            mpc.fillFromSelected();
+
+        refreshSurfaces();
+        repaint();
+    });
+}
+
+void MainComponent::askSceneName()
+{
+    prompt = std::make_unique<juce::AlertWindow> (lang::t ("SALVA SCENA"), "", juce::MessageBoxIconType::NoIcon);
+    prompt->setLookAndFeel (&getLookAndFeel());
+    prompt->addTextEditor ("nome", juce::Time::getCurrentTime().formatted ("%Y-%m-%d %H%M"));
+    prompt->addButton (lang::t ("SALVA SCENA"), 1, juce::KeyPress (juce::KeyPress::returnKey));
+    prompt->addButton (lang::t ("ANNULLA"), 0, juce::KeyPress (juce::KeyPress::escapeKey));
+
+    prompt->enterModalState (true, juce::ModalCallbackFunction::create (
+        [safe = juce::Component::SafePointer<MainComponent> (this)] (int result)
+    {
+        if (safe == nullptr)
+            return;
+
+        const auto name = safe->prompt != nullptr ? safe->prompt->getTextEditorContents ("nome")
+                                                  : juce::String();
+        safe->prompt.reset();
+
+        if (result == 1 && name.trim().isNotEmpty())
+            safe->saveSceneAs (name.trim());
+    }), false);
+}
+
+void MainComponent::saveSceneAs (const juce::String& name)
+{
+    juce::String error;
+    const auto folder = library::sceneFolder (name);
+
+    if (library::saveScene (folder, mpc, error))
+        mpc.setMessageFromOutside ("SCENA SALVATA");
+    else
+        mpc.setMessageFromOutside (error.isNotEmpty() ? error : juce::String ("NON CI RIESCO"));
+
+    refreshSurfaces();
+    repaint();
+}
+
+void MainComponent::chooseSceneToOpen()
+{
+    chooser = std::make_unique<juce::FileChooser> (lang::t ("APRI SCENA"), library::scenesFolder());
+
+    chooser->launchAsync (juce::FileBrowserComponent::openMode
+                              | juce::FileBrowserComponent::canSelectDirectories,
+                          [this] (const juce::FileChooser& fc)
+    {
+        const auto folder = fc.getResult();
+        if (folder == juce::File() || ! folder.isDirectory())
+            return;
+
+        juce::String error;
+        if (library::loadScene (folder, mpc, error))
+            mpc.setMessageFromOutside ("SCENA APERTA");
+        else
+            mpc.setMessageFromOutside (error.isNotEmpty() ? error : juce::String ("NON CI RIESCO"));
+
+        refreshSurfaces();
+        repaint();
+    });
+}
+
+void MainComponent::putSelectedInLibrary()
+{
+    const int index = mpc.selectedDrumIndex();
+    const auto& d = mpc.engine().drum (index);
+    if (! d.loaded())
+    {
+        mpc.setMessageFromOutside ("PAD VUOTO");
+        return;
+    }
+
+    const auto written = library::addToLibrary (library::samplesFolder(), d.name,
+                                                mpc.engine().copyOf (index), d.sourceRate);
+
+    mpc.setMessageFromOutside (written != juce::File() ? "SALVATO IN LIBRERIA" : "NON CI RIESCO");
+    refreshSurfaces();
+}
+
+void MainComponent::browseLibrary()
+{
+    chooser = std::make_unique<juce::FileChooser> (lang::t ("LIBRERIA"), library::samplesFolder(),
+                                                   "*.wav;*.aif;*.aiff;*.flac;*.mp3");
+
+    chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                          [this] (const juce::FileChooser& fc)
+    {
+        const auto file = fc.getResult();
+        if (file == juce::File())
+            return;
+
+        if (mpc.engine().loadFile (mpc.selectedDrumIndex(), file))
+            mpc.setMessageFromOutside (file.getFileNameWithoutExtension().toUpperCase());
+
+        refreshSurfaces();
+        repaint();
     });
 }
 
@@ -601,6 +746,8 @@ void MainComponent::resized()
     cleanButton.setBounds (top.removeFromRight (110).reduced (2));
     top.removeFromRight (8);
     langButton.setBounds (top.removeFromRight (64).reduced (2));
+    top.removeFromRight (8);
+    sceneButton.setBounds (top.removeFromRight (100).reduced (2));
     top.removeFromRight (8);
     bankButton.setBounds (top.removeFromRight (140).reduced (2));
     brandArea = top;

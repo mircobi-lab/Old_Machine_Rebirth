@@ -10,7 +10,7 @@ pannello, e se c'e' gia'.
 | Scritta Akai | Cosa fa | Da noi | Stato |
 |---|---|---|---|
 | SAMPLE | pagina del campione | tasto CAMPIONA sopra il display | pagina c'e', campionamento no |
-| INPUT CONFIG (shift) | sceglie l'ingresso da cui campionare | pagina CAMPIONA, tasti funzione | manca |
+| INPUT CONFIG (shift) | sceglie l'ingresso da cui campionare | tasto AUDIO della finestra | fatto: l'ingresso si scegle nella scheda audio |
 | SEQ | pagina della sequenza | tasto SEQUENZA | pagina c'e', sequencer no |
 | STEP EDIT (shift) | correzione nota per nota | tasto PASSO | manca |
 | PAD FX | effetti sul pad | da decidere | manca |
@@ -33,7 +33,7 @@ pannello, e se c'e' gia'.
 | LOOP | il campione gira su se stesso | pagina SUONO | manca |
 | REVERSE (shift) | lo suona all'indietro | settimo rotativo | **fatto** |
 | CHOP | taglia il campione in fette | pagina FETTE, tasto F1 SPACCA | fatto |
-| NOTE ON (shift) | le fette suonano come note | pagina FETTE | manca |
+| NOTE ON (shift) | le fette suonano come note | pagina FETTE, tasto RIEMPI | fatto: le fette finiscono sui pad di fila |
 
 ## Suono scelto
 
@@ -49,13 +49,13 @@ pannello, e se c'e' gia'.
 | WARP (pad 15) | cambia durata senza cambiare tono | pagina SUONO | manca |
 | COMPRESSOR (pad 5) | compressore sull'uscita | pagina MIX | manca |
 | SAMPLE SELECT | sceglie il campione del pad | tasto CARICA, e trascinando i file | **fatto** |
-| SAVE SAMPLE (shift) | salva il campione | pagina DISCO | manca |
+| SAVE SAMPLE (shift) | salva il campione | pagina DISCO, tasto IN LIBRERIA | fatto |
 
 ## Registrare e suonare
 
 | Scritta Akai | Cosa fa | Da noi | Stato |
 |---|---|---|---|
-| SAMPLE RECORD | campiona dall'ingresso | REC con SHIFT | manca |
+| SAMPLE RECORD | campiona dall'ingresso | pagina CAMPIONA, tasti ARMA e REGISTRA | fatto, per adesso dal microfono del Mac |
 | RECALL (shift) | ripesca l'ultimo campionato | pagina CAMPIONA | manca |
 | SEQ RECORD | registra la sequenza | tasto REC | manca |
 | PLAY | parte | tasto PLAY | manca il sequencer |
@@ -67,7 +67,7 @@ pannello, e se c'e' gia'.
 | REC QUANTIZE (pad 10) | quantizza mentre registri | pagina SEQUENZA | manca |
 | RESAMPLE (pad 11) | ricampiona quello che esce | tasto CONVERT | manca |
 | SONG (pad 12) | incatena le sequenze | tasto BRANO | manca |
-| PROJECT (pad 16) | il progetto intero | pagina DISCO | manca |
+| PROJECT (pad 16) | il progetto intero | pagina DISCO, SALVA SCENA e APRI SCENA | fatto |
 | MIDI CONFIG (pad 8) | ingressi e uscite MIDI | pagina DISCO | manca |
 
 ## Servizio
@@ -119,3 +119,63 @@ colpo resta dove era e il campione non va fuori tempo.
 
 I due motori non sono copiati qui dentro: CMake li scarica dai loro repository
 quando compila. Se li migliori la', li migliori anche qui.
+
+## Il registratore
+
+La pagina CAMPIONA, tasti sotto il display:
+
+| Tasto | Cosa fa |
+|---|---|
+| F1 ARMA | aspetta, e parte da solo quando il suono supera la soglia |
+| F2 REGISTRA | parte subito |
+| F3 STOP | ferma e mette il campione sul pad scelto |
+| F4 ASCOLTA | fa sentire l'ingresso mentre si prepara |
+
+I primi tre rotativi sono soglia (0-99), durata (1-60 secondi) e anticipo
+(0-1000 ms). L'anticipo e' quello che sulla macchina vera si chiama
+pre-record: tiene da parte l'ultimo mezzo secondo prima dello scatto, perche'
+quando la soglia scatta l'attacco del colpo e' gia' passato. Senza quello si
+perde sempre la botta iniziale.
+
+L'ingresso e' quello scelto nella scheda audio, tasto AUDIO: per adesso il
+microfono del Mac, ma qualunque ingresso va bene.
+
+## Riempire tanti pad in un colpo
+
+Nella pagina FETTE, oltre a SPACCA:
+
+| Tasto | Cosa fa |
+|---|---|
+| F5 RIEMPI | taglia il campione del pad in fette uguali e le mette sui pad che seguono |
+| F6 FETTE + / F7 FETTE - | quante fette: 4, 8, 16, 32, 64, 128 |
+
+Se il pad e' vuoto chiede un file: un campione lungo o un brano intero. Le
+fette partono dal pad scelto, cosi' si mette un brano sul banco A e un altro
+sul banco B e si suonano a pezzi, che e' quello che serve per i mash up. I
+tagli vengono spostati sul passaggio per lo zero piu' vicino e ogni fetta ha un
+millisecondo di dissolvenza ai capi: senza questo, a ogni attacco si sente il
+clic.
+
+## Scene e libreria
+
+Pagina DISCO: SALVA SCENA, APRI SCENA, IN LIBRERIA, LIBRERIA. Gli stessi
+comandi stanno nel tasto SCENA della finestra.
+
+Tutto finisce in `Musica/Old Machine Rebirth`:
+
+- `Scene/<nome>/` una cartella per scena, con `scena.txt` e un wav per ogni pad
+  pieno. I campioni restano wav normali, quindi si possono riusare a mano.
+- `Libreria/` i campioni messi da parte, un wav per nome. Un nome che c'e' gia'
+  prende un numero in fondo invece di cancellare quello di prima.
+
+La scena tiene i suoni dei 128 pad coi loro parametri, il tempo, il passo, il
+banco, il pad scelto, il volume generale e i mute. Aprire una scena svuota
+prima tutti i pad, cosi' non restano in giro i suoni di quella di prima.
+
+## Le lingue
+
+Il pannello e il display parlano italiano, inglese o francese: tasto ITA/UK/FR
+nella finestra, e la scelta si ricorda. Le parole italiane sono le chiavi: se
+una traduzione manca, resta quella italiana invece di lasciare la casella
+vuota. Il francese e' in maiuscolo senza accenti, come la serigrafia di una
+macchina vera.
