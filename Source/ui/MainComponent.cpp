@@ -283,6 +283,46 @@ void MainComponent::showOscSettings()
     }), false);
 }
 
+void MainComponent::refreshWave()
+{
+    if (push == nullptr)
+        return;
+
+    const auto markers = mpc.waveMarkers();
+
+    if (! markers.show)
+    {
+        if (! wavePeaks.isEmpty())
+        {
+            wavePeaks = {};
+            wavePad = -1;
+            push->setWave ({});
+        }
+        return;
+    }
+
+    const auto& drum = mpc.engine().drum (markers.drumIndex);
+    const int length = drum.sample.getNumSamples();
+
+    if (markers.drumIndex != wavePad || markers.sampleVersion != waveVersion
+            || length != waveLength)
+    {
+        wavePeaks = mbstudio::computePeaks (mpc.engine().copyOf (markers.drumIndex), 900);
+        wavePad = markers.drumIndex;
+        waveVersion = markers.sampleVersion;
+        waveLength = length;
+    }
+
+    auto view = wavePeaks;
+    view.startFraction = markers.startFraction;
+    view.endFraction = markers.endFraction;
+    view.slices = markers.slices;
+    view.colour = sound::colourSelected (markers.kind);
+    view.caption = markers.caption;
+
+    push->setWave (std::move (view));
+}
+
 //==============================================================================
 void MainComponent::refreshLights()
 {
@@ -331,6 +371,7 @@ void MainComponent::refreshSurfaces()
         push->setBankGroup (mpc.bankGroup());
 
     refreshLights();
+    refreshWave();
 
     const auto lines = mpc.screenLines();
     if (push != nullptr)

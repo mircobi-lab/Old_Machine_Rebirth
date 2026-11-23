@@ -8,6 +8,7 @@
 #include "engine/Slicer.h"
 #include "engine/SampleEngine.h"
 #include "machine/PadGrid.h"
+#include "machine/StepGrid.h"
 
 #include <array>
 #include <functional>
@@ -40,6 +41,28 @@ public:
     // --- quello che le superfici fanno vedere
     PadLight lightFor (PadRef) const;
     sound::Kind kindFor (PadRef) const;
+
+    // La pagina PASSO: la meta' di sopra della griglia scrive i passi del pad
+    // scelto, quella di sotto resta pad.
+    bool stepMode() const { return page == control::Command::pageStep; }
+    int stepWindowStart() const { return stepOffset; }
+
+    // Quello che serve per disegnare l'onda del campione sul display: i segni,
+    // non i campioni. Chi disegna chiede il suono al campionatore una volta
+    // sola, quando `sampleVersion` cambia.
+    struct WaveMarkers
+    {
+        bool show = false;
+        int drumIndex = 0;
+        int sampleVersion = 0;
+        double startFraction = 0.0;
+        double endFraction = 1.0;
+        std::vector<double> slices;
+        sound::Kind kind = sound::Kind::generico;
+        juce::String caption;
+    };
+
+    WaveMarkers waveMarkers() const;
     bool buttonLit (const control::Control&) const;
     juce::StringArray screenLines() const;
     // Le etichette degli otto tasti sotto il display, che cambiano con la
@@ -137,6 +160,8 @@ private:
     void tapTempo();
     void moveSelection (int rows, int columns);
     void applyQuantiseToSequencer();
+    int tickForStep (int step) const;
+    bool stepPressed (int step);
     void setMessage (juce::String);
     void changed();
 
@@ -148,6 +173,7 @@ private:
     bool soloMode = false;
     bool resampling = false;            // il registratore prende l'uscita, non l'ingresso
     bool padsIntoSequence = true;       // SUONA: i pad finiscono nella sequenza o no
+    int stepOffset = 0;                 // da che passo comincia la finestra di 32
 
     PadRef selected { 0, 1 };
     int group = 0;                      // 0 = A..D, 1 = E..H

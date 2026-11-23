@@ -58,8 +58,10 @@ set(REBIRTH_CORE_SOURCES
     Source/engine/Recorder.cpp
     Source/engine/Sequencer.cpp
     Source/engine/SoundKind.cpp
+    Source/push2/Waveform.cpp
     Source/engine/Slicer.cpp
     Source/machine/Library.cpp
+    Source/machine/StepGrid.cpp
     Source/ui/Lang.cpp
     Source/engine/Cleaner.cpp
     Source/machine/PadGrid.cpp

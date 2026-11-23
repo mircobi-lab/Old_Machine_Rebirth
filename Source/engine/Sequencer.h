@@ -55,6 +55,19 @@ public:
     // --- scrivere
     void recordHit (int drum, int velocity);
     void eraseDrum (int drum);       // toglie tutti i colpi di quel pad
+
+    // --- scrivere i passi a mano, nella pagina PASSO
+    // Il colpo si cerca e si scrive in una finestrella intorno al passo, non
+    // sul singolo tick: un colpo suonato a mano cade sempre un po' prima o un
+    // po' dopo, e deve comunque accendere il suo passo.
+    bool hasHit (int drum, int tick, int window) const;
+    void setHit (int drum, int tick, int velocity);
+    void removeHit (int drum, int tick, int window);
+    bool toggleHit (int drum, int tick, int window, int velocity);
+
+    int velocityAt (int drum, int tick, int window) const;
+    int length() const { return lengthInTicks(); }
+    int positionTicks() const { return (int) shownTicks.load(); }
     void clearSequence();
     void newSequence();              // la prima sequenza vuota che trova
     // Copia la sequenza di adesso in un'altra, battute comprese.

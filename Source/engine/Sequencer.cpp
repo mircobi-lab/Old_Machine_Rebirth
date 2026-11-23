@@ -175,6 +175,91 @@ void Sequencer::eraseDrum (int drum)
     editing.store (false);
 }
 
+bool Sequencer::hasHit (int drum, int tick, int window) const
+{
+    return velocityAt (drum, tick, window) > 0;
+}
+
+int Sequencer::velocityAt (int drum, int tick, int window) const
+{
+    const auto& sequence = sequences[current];
+    const int count = sequence.count.load();
+    const int length = lengthInTicks();
+
+    for (int i = 0; i < count; ++i)
+    {
+        const auto& e = sequence.events[(size_t) i];
+        if (e.drum != drum || e.velocity <= 0)
+            continue;
+
+        // la distanza si misura sul giro: il tick 0 e l'ultimo sono vicini
+        int distance = std::abs (e.tick % length - tick % length);
+        distance = juce::jmin (distance, length - distance);
+
+        if (distance <= window)
+            return e.velocity;
+    }
+
+    return 0;
+}
+
+void Sequencer::setHit (int drum, int tick, int velocity)
+{
+    auto& sequence = sequences[current];
+    const int count = sequence.count.load();
+    if (count >= maxEvents)
+        return;
+
+    Event e;
+    e.tick = tick % lengthInTicks();
+    e.drum = drum;
+    e.velocity = juce::jlimit (1, 127, velocity);
+
+    sequence.events[(size_t) count] = e;
+    sequence.count.store (count + 1);
+}
+
+void Sequencer::removeHit (int drum, int tick, int window)
+{
+    auto& sequence = sequences[current];
+    const int length = lengthInTicks();
+
+    editing.store (true);
+
+    int kept = 0;
+    const int count = sequence.count.load();
+    for (int i = 0; i < count; ++i)
+    {
+        const auto& e = sequence.events[(size_t) i];
+
+        bool remove = e.drum == drum;
+        if (remove)
+        {
+            int distance = std::abs (e.tick % length - tick % length);
+            distance = juce::jmin (distance, length - distance);
+            remove = distance <= window;
+        }
+
+        if (! remove)
+            sequence.events[(size_t) kept++] = e;
+    }
+
+    sequence.count.store (kept);
+    editing.store (false);
+}
+
+bool Sequencer::toggleHit (int drum, int tick, int window, int velocity)
+{
+    if (hasHit (drum, tick, window))
+    {
+        removeHit (drum, tick, window);
+        return false;
+    }
+
+    setHit (drum, tick, velocity);
+    return true;
+}
+
 void Sequencer::clearSequence()
 {
     editing.store (true);

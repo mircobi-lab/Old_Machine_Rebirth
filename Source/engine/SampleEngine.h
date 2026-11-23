@@ -29,6 +29,11 @@ public:
     Drum& drum (int index);
     const Drum& drum (int index) const;
     int loadedCount() const;
+
+    // Cambia ogni volta che un pad riceve un suono nuovo: serve a chi disegna
+    // l'onda per sapere quando rifare i conti, invece di rifarli 20 volte al
+    // secondo.
+    int loadVersion() const { return loads.load(); }
     int activeVoices() const { return playing.load(); }
 
     // Carica un file sul pad. Vero se c'e' riuscito.
@@ -76,4 +81,5 @@ private:
     double rate = 44100.0;
     std::uint32_t counter = 0;
     std::atomic<int> playing { 0 };
+    std::atomic<int> loads { 0 };
 };

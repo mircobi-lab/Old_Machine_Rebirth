@@ -3,6 +3,7 @@
 #include "machine/Machine.h"
 #include "control/ControlMap.h"
 #include "push2/Push2Display.h"
+#include "push2/Waveform.h"
 
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <functional>
@@ -29,6 +30,7 @@ public:
     void setBankGroup (int group);                  // 0 = A..D, 1 = E..H
     int getBankGroup() const { return bankGroup; }
     void setScreenLines (juce::StringArray);        // cosa scrivere sul display
+    void setWave (mbstudio::WaveView);             // l'onda del campione, o una vuota
     juce::Image lastScreen() const;                 // l'ultima schermata, per rivederla sul Mac
 
     std::function<void (machine::PadRef, int velocity)> onPadDown;
@@ -71,6 +73,7 @@ private:
     std::array<sound::Kind, machine::numDrums> kinds {};     // la famiglia di ogni suono
     std::array<machine::PadLight, 64> onScreen {};           // cosa c'e' davvero sui LED
     std::array<int, 64> onScreenEntry {};                    // e con quale colore
+    mbstudio::WaveView wave;
     bool fullRefresh = true;
     juce::StringArray screenLines;
     juce::Image screenImage;

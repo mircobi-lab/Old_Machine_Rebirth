@@ -191,6 +191,7 @@ bool SampleEngine::loadBuffer (int drumIndex, const juce::String& name,
     d.start = 0;
     d.end = 0;
     d.reverse = false;
+    loads.fetch_add (1);
     return true;
 }
 
@@ -227,5 +228,6 @@ bool SampleEngine::loadFile (int drumIndex, const juce::File& file)
     d.start = 0;
     d.end = 0;
     d.reverse = false;
+    loads.fetch_add (1);
     return true;
 }

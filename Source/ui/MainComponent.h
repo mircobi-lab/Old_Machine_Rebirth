@@ -37,6 +37,7 @@ private:
     void timerCallback() override;
     void refreshSurfaces();
     void refreshLights();
+    void refreshWave();
     juce::Rectangle<int> cellBounds (int row, int column) const;
     std::optional<machine::PadRef> padAt (juce::Point<int>) const;
     void loadOntoSelected();
@@ -76,6 +77,12 @@ private:
     juce::String busy;
 
     juce::AudioBuffer<float> inputMix;    // per l'ascolto dell'ingresso
+
+    // L'onda si ricalcola solo quando cambia il campione, non a ogni disegno:
+    // su un brano di un minuto sono due milioni e mezzo di campioni da
+    // scorrere, e il display si ridisegna venti volte al secondo.
+    mbstudio::WaveView wavePeaks;
+    int wavePad = -1, waveVersion = -1, waveLength = -1;
 
     std::unique_ptr<Push2Panel> push;
     std::unique_ptr<OscSurface> osc;

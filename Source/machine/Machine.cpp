@@ -114,6 +114,26 @@ void Machine::select (PadRef p)
     changed();
 }
 
+int Machine::tickForStep (int step) const
+{
+    const int ticks = seq.quantiseTicks();
+    return ((stepOffset + step) * ticks) % juce::jmax (1, seq.length());
+}
+
+bool Machine::stepPressed (int step)
+{
+    const int drum = drumIndex (selected);
+    const int ticks = seq.quantiseTicks();
+    const int window = juce::jmax (1, ticks / 2 - 1);
+
+    const bool added = seq.toggleHit (drum, tickForStep (step), window,
+                                      fullLevel ? 127 : 100);
+
+    setMessage ((added ? "PASSO " : "TOLTO ") + juce::String (stepOffset + step + 1));
+    changed();
+    return added;
+}
+
 void Machine::hit (PadRef p, int velocity)
 {
     const int index = drumIndex (p);
@@ -200,6 +220,18 @@ void Machine::hit (PadRef p, int velocity)
 void Machine::padDown (PadRef p, int velocity)
 {
     const int index = drumIndex (p);
+
+    // Nella pagina PASSO le quattro file in alto non sono pad: sono i 32
+    // passi del suono scelto. Il controllo sta qui, cosi' vale per il Push,
+    // per l'OSC e per la finestra senza che nessuno dei tre sappia niente.
+    if (stepMode())
+        if (const auto cell = cellForPad (p, group))
+            if (isStepCell (cell->first))
+            {
+                stepPressed (stepForCell (cell->first, cell->second));
+                return;
+            }
+
     held[(size_t) index] = true;
 
     if (noteRepeat && ! muteMode && ! eraseMode && copySource < 0)
@@ -217,6 +249,11 @@ void Machine::padDown (PadRef p, int velocity)
 
 void Machine::padUp (PadRef p)
 {
+    if (stepMode())
+        if (const auto cell = cellForPad (p, group))
+            if (isStepCell (cell->first))
+                return;
+
     const int index = drumIndex (p);
     held[(size_t) index] = false;
 
@@ -404,6 +441,33 @@ void Machine::command (const control::Control& c, bool down)
                             setMessage ("BATTUTE " + juce::String (seq.bars())); break;
                     default: break;
                 }
+            }
+            else if (page == C::pageStep)
+            {
+                if (c.index == 0)
+                {
+                    seq.eraseDrum (drumIndex (selected));
+                    setMessage ("CANCELLA SUONO");
+                }
+                else if (c.index == 1)
+                {
+                    stepOffset = juce::jmax (0, stepOffset - numSteps);
+                    setMessage ("PASSO " + juce::String (stepOffset + 1));
+                }
+                else if (c.index == 2)
+                {
+                    const int total = seq.length() / juce::jmax (1, seq.quantiseTicks());
+                    if (stepOffset + numSteps < total)
+                        stepOffset += numSteps;
+                    setMessage ("PASSO " + juce::String (stepOffset + 1));
+                }
+                else if (c.index == 3)
+                {
+                    seq.setTimingCorrect (! seq.timingCorrect());
+                    setMessage (seq.timingCorrect() ? "CORREGGI ACCESO" : "CORREGGI SPENTO");
+                }
+                else
+                    setMessage ("");
             }
             else if (page == C::pageDisk)
             {
@@ -625,13 +689,31 @@ void Machine::command (const control::Control& c, bool down)
             break;
 
         case C::pageLeft:
-            seq.setSequence (juce::jmax (0, seq.sequenceIndex() - 1));
-            setMessage ("SEQUENZA " + juce::String (seq.sequenceIndex() + 1));
+            if (stepMode())
+            {
+                stepOffset = juce::jmax (0, stepOffset - numSteps);
+                setMessage ("PASSO " + juce::String (stepOffset + 1));
+            }
+            else
+            {
+                seq.setSequence (juce::jmax (0, seq.sequenceIndex() - 1));
+                setMessage ("SEQUENZA " + juce::String (seq.sequenceIndex() + 1));
+            }
             break;
 
         case C::pageRight:
-            seq.setSequence (juce::jmin (Sequencer::numSequences - 1, seq.sequenceIndex() + 1));
-            setMessage ("SEQUENZA " + juce::String (seq.sequenceIndex() + 1));
+            if (stepMode())
+            {
+                const int total = seq.length() / juce::jmax (1, seq.quantiseTicks());
+                if (stepOffset + numSteps < total)
+                    stepOffset += numSteps;
+                setMessage ("PASSO " + juce::String (stepOffset + 1));
+            }
+            else
+            {
+                seq.setSequence (juce::jmin (Sequencer::numSequences - 1, seq.sequenceIndex() + 1));
+                setMessage ("SEQUENZA " + juce::String (seq.sequenceIndex() + 1));
+            }
             break;
 
         case C::up:    moveSelection (-1, 0); break;
@@ -741,6 +823,19 @@ void Machine::command (const control::Control& c, bool down)
 
 void Machine::changeParameter (int which, int steps)
 {
+    // nella pagina FETTE il primo rotativo e' il numero delle fette: si gira e
+    // si vedono i tagli muoversi sull'onda, prima di premere RIEMPI
+    if (page == control::Command::pageChop && which == 0)
+    {
+        if (steps != 0)
+        {
+            slices = slicer::nextCount (slices, steps > 0 ? 1 : -1);
+            setMessage ("FETTE " + juce::String (slices));
+        }
+
+        return;
+    }
+
     // nella pagina CAMPIONA i primi tre rotativi sono quelli del registratore,
     // perche' li' si guardano la soglia e la durata, non il campione
     if (page == control::Command::pageSample && which <= 2)
@@ -870,6 +965,31 @@ PadLight Machine::lightFor (PadRef p) const
 {
     const int index = drumIndex (p);
 
+    if (stepMode())
+        if (const auto cell = cellForPad (p, group))
+            if (isStepCell (cell->first))
+            {
+                const int step = stepForCell (cell->first, cell->second);
+                const int ticks = seq.quantiseTicks();
+                const int window = juce::jmax (1, ticks / 2 - 1);
+                const int tick = ((stepOffset + step) * ticks) % juce::jmax (1, seq.length());
+
+                // il passo dove sta passando la testina si accende come se
+                // suonasse, anche quando e' vuoto
+                if (seq.isPlaying())
+                {
+                    const int now = seq.positionTicks() % juce::jmax (1, seq.length());
+                    if (std::abs (now - tick) <= window)
+                        return PadLight::playing;
+                }
+
+                if (tick >= seq.length())
+                    return PadLight::off;        // fuori dalla sequenza
+
+                return seq.hasHit (drumIndex (selected), tick, window) ? PadLight::loaded
+                                                                       : PadLight::empty;
+            }
+
     if (mutes[(size_t) index])
         return PadLight::muted;
     if (index == drumIndex (selected))
@@ -886,8 +1006,48 @@ void Machine::setMasterGain (float gain)
     changed();
 }
 
+Machine::WaveMarkers Machine::waveMarkers() const
+{
+    using C = control::Command;
+
+    WaveMarkers w;
+    w.drumIndex = drumIndex (selected);
+    w.sampleVersion = sampler.loadVersion();
+
+    const auto& d = sampler.drum (w.drumIndex);
+    const int length = d.sample.getNumSamples();
+
+    // L'onda serve dove si lavora sul campione: quando si ritaglia, quando si
+    // fa a fette e quando si e' appena registrato.
+    w.show = length > 0 && (page == C::pageSound || page == C::pageChop || page == C::pageSample);
+    if (! w.show)
+        return w;
+
+    w.kind = d.kind;
+    w.startFraction = juce::jlimit (0.0, 1.0, (double) d.start / (double) length);
+    w.endFraction = juce::jlimit (w.startFraction, 1.0, (double) d.lastSample() / (double) length);
+
+    // I tagli che RIEMPI farebbe adesso: si vedono prima di premere, e
+    // cambiano mentre si gira il numero delle fette
+    if (page == C::pageChop)
+        for (int i = 1; i < slices; ++i)
+            w.slices.push_back ((double) i / (double) slices);
+
+    w.caption = juce::String (length / juce::jmax (1.0, d.sourceRate), 2) + "S";
+    if (page == C::pageChop)
+        w.caption = juce::String (slices) + " " + lang::t ("FETTE") + "  " + w.caption;
+
+    return w;
+}
+
 sound::Kind Machine::kindFor (PadRef p) const
 {
+    // nei passi si vede il colore del suono che si sta scrivendo
+    if (stepMode())
+        if (const auto cell = cellForPad (p, group))
+            if (isStepCell (cell->first))
+                return sampler.drum (drumIndex (selected)).kind;
+
     return sampler.drum (drumIndex (p)).kind;
 }
 
@@ -965,6 +1125,13 @@ juce::StringArray Machine::softKeyLabels() const
         labels.set (5, lang::t ("RADDOPPIA"));
         labels.set (6, lang::t ("DIMEZZA"));
         labels.set (7, lang::t ("BATTUTE"));
+    }
+    else if (page == control::Command::pageStep)
+    {
+        labels.set (0, lang::t ("CANCELLA SUONO"));
+        labels.set (1, lang::t ("PASSI -"));
+        labels.set (2, lang::t ("PASSI +"));
+        labels.set (3, lang::t ("CORREGGI"));
     }
     else if (page == control::Command::pageDisk)
     {
@@ -1169,8 +1336,16 @@ juce::StringArray Machine::screenLines() const
     lines.add ("#" + lang::phrase (pageName));
     lines.add (lang::t ("PAD") + "|" + bankName (selected.bank) + juce::String (selected.pad));
     lines.add (lang::t ("SUONO") + "|" + (d.loaded() ? d.name : lang::t ("VUOTO")));
-    if (page == control::Command::pageSequence || page == control::Command::pageSong
-            || page == control::Command::pageStep)
+    if (page == control::Command::pageStep)
+    {
+        lines.add (lang::t ("PASSI") + "|" + juce::String (stepOffset + 1) + "-"
+                       + juce::String (stepOffset + numSteps));
+        lines.add (lang::t ("PASSO") + "|" + control::quantiseName (quantise));
+        lines.add (lang::t ("POSIZIONE") + "|" + juce::String (seq.positionBar()) + "."
+                       + juce::String (seq.positionBeat()));
+        lines.add (lang::t ("COLPI") + "|" + juce::String (seq.eventCount()));
+    }
+    else if (page == control::Command::pageSequence || page == control::Command::pageSong)
     {
         lines.add (lang::t ("SEQUENZA") + "|" + juce::String (seq.sequenceIndex() + 1));
         lines.add (lang::t ("BATTUTE") + "|" + juce::String (seq.bars()));

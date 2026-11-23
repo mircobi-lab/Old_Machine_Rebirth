@@ -278,18 +278,26 @@ void Push2Panel::refreshLeds (bool everything)
     send (out);
 }
 
+void Push2Panel::setWave (mbstudio::WaveView view)
+{
+    const juce::ScopedLock sl (lock);
+    wave = std::move (view);
+}
+
 void Push2Panel::drawScreen()
 {
     if (display == nullptr)
         return;
 
     juce::StringArray lines;
+    mbstudio::WaveView view;
     {
         const juce::ScopedLock sl (lock);
         lines = screenLines;
+        view = wave;
     }
     auto image = mbstudio::renderMachineScreen (lines, machine::bankName (bankGroup * 4),
-                                                machine::bankName (bankGroup * 4 + 3), font);
+                                                machine::bankName (bankGroup * 4 + 3), font, view);
     display->setImage (image);
     {
         const juce::ScopedLock sl (lock);

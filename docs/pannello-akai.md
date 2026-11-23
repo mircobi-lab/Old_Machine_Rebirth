@@ -12,7 +12,7 @@ pannello, e se c'e' gia'.
 | SAMPLE | pagina del campione | tasto CAMPIONA sopra il display | pagina c'e', campionamento no |
 | INPUT CONFIG (shift) | sceglie l'ingresso da cui campionare | tasto AUDIO della finestra | fatto: l'ingresso si scegle nella scheda audio |
 | SEQ | pagina della sequenza | tasto SEQUENZA | pagina c'e', sequencer no |
-| STEP EDIT (shift) | correzione nota per nota | pagina PASSO | manca: si cancella per pad, non ancora nota per nota |
+| STEP EDIT (shift) | correzione nota per nota | pagina PASSO, 32 passi nella meta' di sopra della griglia | fatto |
 | PAD FX | effetti sul pad | da decidere | manca |
 | FLEX BEAT (shift) | ripetizioni ritmiche | da decidere | manca |
 | KNOB FX | effetti sui rotativi | i nostri otto rotativi | manca |
@@ -42,7 +42,7 @@ pannello, e se c'e' gia'.
 | K1 K2 K3 | tre rotativi sui parametri | otto rotativi: livello, accordatura, panorama, inizio, fine, gruppo, rovescio, tempo | **fatto** |
 | MAIN VOLUME | volume generale | rotativo master | **fatto** |
 | Fader | parametro assegnabile | striscia del Push | fatto: volume generale |
-| TRIM SAMPLE (pad 13) | taglia inizio e fine | quarto e quinto rotativo | **fatto**, manca il disegno dell'onda |
+| TRIM SAMPLE (pad 13) | taglia inizio e fine | quarto e quinto rotativo, guardando l'onda sul display | fatto |
 | HALF SPEED (pad 6) | meta' velocita' | SHIFT + ottava giu' (un'ottava sotto) | **fatto** |
 | DOUBLE SPEED (pad 7) | doppia velocita' | SHIFT + ottava su | **fatto** |
 | TIME CORRECT (pad 14) | quantizza quello che hai suonato | colonna a destra dei pad | passo scelto, sequencer no |

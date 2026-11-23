@@ -21,6 +21,7 @@ Qui sono il doppio. Quelli che in una pagina non servono restano spenti.
 | CAMPIONA | ARMA | REGISTRA | STOP | ASCOLTA | RICAMPIONA | IN LIBRERIA | ANNULLA |
 | FETTE | SPACCA | PULISCI AI | PULISCI MP3 | ANNULLA | RIEMPI | FETTE + | FETTE - |
 | SEQUENZA | REC SEQ | SOVRAINCIDI | CORREGGI | CANCELLA SEQ | NUOVA SEQ | RADDOPPIA | DIMEZZA |
+| PASSO | CANCELLA SUONO | PASSI - | PASSI + | CORREGGI | | | |
 | DISCO | SALVA SCENA | APRI SCENA | IN LIBRERIA | LIBRERIA | | | |
 
 ## La striscia sotto il display
@@ -140,3 +141,40 @@ rispondono 58 piu' il TAP, che ha un collaudo suo perche' ha bisogno del tempo
 vero. Quattro passano la palla alla finestra (SETUP, SFOGLIA, A LIVE, SCEGLI),
 SHIFT per mestiere cambia gli altri, e resta spento solo AGG EFFETTO, che
 aspetta gli effetti.
+
+## L'onda sul display
+
+Nelle pagine SUONO, FETTE e CAMPIONA il display fa vedere il campione del pad
+scelto: la fascia centrale e' l'onda, i campi dei rotativi si stringono sotto.
+
+- il pezzo **dentro il ritaglio** e' pieno, quello fuori resta smorto: si vede
+  che c'e' ancora ma che non suona. Le due maniglie bianche con la linguetta
+  sono inizio e fine, e si muovono col quarto e quinto rotativo
+- nella pagina FETTE si vedono anche **i tagli che RIEMPI farebbe adesso**,
+  numerati fino a sedici. Il primo rotativo cambia quante fette sono, e le
+  righe si spostano mentre lo si gira: si decide guardando, prima di premere
+- l'onda e' del colore della famiglia del suono, come il pad
+- i picchi si calcolano una volta sola per campione, non venti volte al
+  secondo: su un brano di un minuto sono due milioni e mezzo di campioni da
+  scorrere. Il conto si rifa' solo quando cambia il pad scelto o il campione
+  che ci sta sopra
+
+## La pagina PASSO: lo step sequencer
+
+Le quattro file in alto diventano 32 passi del suono scelto, da sinistra a
+destra e dall'alto in basso. Le quattro file in basso restano i pad dei due
+banchi di sotto, cosi' mentre si scrivono i passi si puo' ancora battere e
+cambiare suono.
+
+- premere una cella in alto mette o toglie il colpo su quel passo
+- il passo scritto si accende col colore del suono, quello vuoto resta smorto,
+  e la testina che passa accende la cella come se suonasse
+- quanto vale un passo lo dice la colonna a destra dei pad: con 1/16 i 32 passi
+  sono due battute
+- se la sequenza e' piu' lunga, i tasti pagina avanti e indietro (o PASSI + e
+  PASSI -) spostano la finestra di 32 passi alla volta
+- CANCELLA SUONO toglie dalla sequenza tutti i colpi del suono scelto
+
+Il controllo sta dentro la macchina, non nelle superfici: la cella premuta
+viene riconosciuta li', quindi i passi si scrivono allo stesso modo dal Push,
+dall'OSC e dalla finestra.
