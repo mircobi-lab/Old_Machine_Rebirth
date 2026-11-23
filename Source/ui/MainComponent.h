@@ -38,6 +38,11 @@ private:
     juce::Rectangle<int> cellBounds (int row, int column) const;
     std::optional<machine::PadRef> padAt (juce::Point<int>) const;
     void loadOntoSelected();
+    void chooseFileToChop();
+    void runChop (const juce::File&);
+    void runClean (cleaner::Preset);
+    void setBusy (juce::String);
+    juce::String busyMessage() const;
     void showOscSettings();
     void startOsc();
     static juce::File oscSettingsFile();
@@ -48,7 +53,14 @@ private:
     juce::Rectangle<int> brandArea, gridArea, debossArea, screenArea;
     juce::Label status;
     juce::TextButton audioButton { "AUDIO" }, bankButton { "BANCHI A-D" },
-                     oscButton { "OSC" }, loadButton { "CARICA" };
+                     oscButton { "OSC" }, loadButton { "CARICA" },
+                     chopButton { "SPACCA" }, cleanButton { "PULISCI" };
+
+    // L'analisi di un brano intero dura: va fatta da parte, non nel filo dei
+    // messaggi, altrimenti la macchina resta ferma mentre lavora.
+    juce::ThreadPool pool { 1 };
+    mutable juce::CriticalSection busyLock;
+    juce::String busy;
 
     std::unique_ptr<Push2Panel> push;
     std::unique_ptr<OscSurface> osc;

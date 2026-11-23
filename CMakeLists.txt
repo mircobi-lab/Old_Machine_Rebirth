@@ -21,12 +21,41 @@ FetchContent_Declare(libusb
     GIT_TAG        v1.0.30-0
     GIT_SHALLOW    TRUE)
 
+# I due pezzi che vengono dagli altri progetti di MBStudio91, presi dai loro
+# repository invece che copiati qui dentro, cosi' se li migliori li migliori una
+# volta sola:
+#   sample-forge  il motore che separa e affetta i campioni (C++17, niente dipendenze)
+#   AIsongFixer   il pulitore spettrale per i file rovinati da AI o da mp3
+FetchContent_Declare(sampleforge
+    GIT_REPOSITORY https://github.com/mircobi-lab/sample-forge.git
+    GIT_TAG        main
+    GIT_SHALLOW    TRUE)
+FetchContent_Declare(songfixer
+    GIT_REPOSITORY https://github.com/mircobi-lab/AIsongFixer.git
+    GIT_TAG        main
+    GIT_SHALLOW    TRUE)
+
 FetchContent_MakeAvailable(JUCE libusb)
+FetchContent_GetProperties(sampleforge)
+if(NOT sampleforge_POPULATED)
+    FetchContent_Populate(sampleforge)
+endif()
+FetchContent_GetProperties(songfixer)
+if(NOT songfixer_POPULATED)
+    FetchContent_Populate(songfixer)
+endif()
+
+set(SAMPLE_FORGE_DIR ${sampleforge_SOURCE_DIR}/native/Source)
+set(SONG_FIXER_DIR ${songfixer_SOURCE_DIR}/Source)
 
 # Sorgenti condivisi fra app e test. I moduli JUCE sono librerie INTERFACE:
 # compilarli in una libreria statica e poi di nuovo nell'app duplicherebbe i
 # simboli, quindi si condivide la lista.
 set(REBIRTH_CORE_SOURCES
+    ${SAMPLE_FORGE_DIR}/Engine/SampleForgeEngine.cpp
+    ${SONG_FIXER_DIR}/Dsp/SpectralCleaner.cpp
+    Source/engine/Chopper.cpp
+    Source/engine/Cleaner.cpp
     Source/machine/PadGrid.cpp
     Source/machine/Machine.cpp
     Source/engine/SampleEngine.cpp
@@ -66,7 +95,7 @@ target_sources(OldMachineRebirth PRIVATE
     Source/ui/MainComponent.cpp
     ${REBIRTH_CORE_SOURCES})
 
-target_include_directories(OldMachineRebirth PRIVATE Source)
+target_include_directories(OldMachineRebirth PRIVATE Source ${SAMPLE_FORGE_DIR} ${SONG_FIXER_DIR})
 target_compile_definitions(OldMachineRebirth PRIVATE
     JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:OldMachineRebirth,JUCE_PRODUCT_NAME>")
 target_link_libraries(OldMachineRebirth PRIVATE
@@ -82,7 +111,7 @@ file(GLOB REBIRTH_TEST_SOURCES CONFIGURE_DEPENDS Tests/*.cpp)
 juce_add_console_app(RebirthTests PRODUCT_NAME "RebirthTests")
 
 target_sources(RebirthTests PRIVATE ${REBIRTH_TEST_SOURCES} ${REBIRTH_CORE_SOURCES})
-target_include_directories(RebirthTests PRIVATE Source Tests)
+target_include_directories(RebirthTests PRIVATE Source Tests ${SAMPLE_FORGE_DIR} ${SONG_FIXER_DIR})
 target_compile_definitions(RebirthTests PRIVATE
     JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_MODAL_LOOPS_PERMITTED=1
     JUCE_APPLICATION_NAME_STRING="RebirthTests")
@@ -102,7 +131,7 @@ add_test(NAME RebirthTests
 # comandi che usa il Push, cosi' le due versioni non vanno fuori passo.
 juce_add_console_app(OscTemplate PRODUCT_NAME "OscTemplate")
 target_sources(OscTemplate PRIVATE tools/osc-template/Main.cpp tools/osc-template/TouchOsc.cpp ${REBIRTH_CORE_SOURCES})
-target_include_directories(OscTemplate PRIVATE Source)
+target_include_directories(OscTemplate PRIVATE Source ${SAMPLE_FORGE_DIR} ${SONG_FIXER_DIR})
 target_compile_definitions(OscTemplate PRIVATE
     JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_APPLICATION_NAME_STRING="OscTemplate")
 target_link_libraries(OscTemplate PRIVATE

@@ -32,7 +32,7 @@ pannello, e se c'e' gia'.
 | TRIPLET (shift) | ribatte in terzina | colonna della quantizzazione, valori T | **fatto** |
 | LOOP | il campione gira su se stesso | pagina SUONO | manca |
 | REVERSE (shift) | lo suona all'indietro | settimo rotativo | **fatto** |
-| CHOP | taglia il campione in fette | tasto FETTE | manca |
+| CHOP | taglia il campione in fette | pagina FETTE, tasto F1 SPACCA | fatto |
 | NOTE ON (shift) | le fette suonano come note | pagina FETTE | manca |
 
 ## Suono scelto
@@ -89,3 +89,33 @@ pannello, e se c'e' gia'.
 - **batteria**: la macchina vive attaccata al computer
 - **scheda microSD**: il progetto sta su disco
 - **schermo a sfioramento**: sul Push il display si guarda e si comanda coi tasti
+
+## Le fette e la pulizia
+
+La pagina FETTE non taglia a mano come l'originale: prende un brano intero e lo
+fa a pezzi da sola, perche' il motore era gia' scritto e collaudato in un altro
+progetto di MBStudio91.
+
+| Tasto sotto il display | Cosa fa |
+|---|---|
+| F1 SPACCA | chiede un file, lo analizza e mette le fette sui pad |
+| F2 PULISCI AI | ripulisce il campione del pad scelto dalla patina delle canzoni generate |
+| F3 PULISCI MP3 | ripulisce il velo metallico di un mp3 a basso bitrate |
+| F4 ANNULLA | rimette il campione di prima |
+
+Gli stessi comandi stanno nella finestra sul Mac, tasti SPACCA e PULISCI, per
+quando il Push non c'e'.
+
+SPACCA usa il motore di `mircobi-lab/sample-forge`: separa il brano in
+batteria, voce, basso e resto, trova il tempo e la tonalita', ritaglia i pezzi
+buoni e li divide in cinque gruppi da otto. Le fette arrivano sui pad un gruppo
+per fila: la batteria dal pad 1, la voce dal 9, i giri dal 17 e via cosi'. Il
+tempo e la tonalita' trovati finiscono nella riga di stato.
+
+PULISCI usa il motore spettrale di `mircobi-lab/AIsongFixer`, con due dosi
+pronte: AI insiste sui medi impastati e sulle sibilanti, MP3 lavora quasi solo
+sopra i 10 kHz. Il ritardo del motore viene tolto dopo l'elaborazione, cosi' il
+colpo resta dove era e il campione non va fuori tempo.
+
+I due motori non sono copiati qui dentro: CMake li scarica dai loro repository
+quando compila. Se li migliori la', li migliori anche qui.

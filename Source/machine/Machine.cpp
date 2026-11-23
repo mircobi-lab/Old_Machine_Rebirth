@@ -311,6 +311,34 @@ void Machine::command (const control::Control& c, bool down)
             pageName = c.label;
             break;
 
+        case C::softKey:
+            if (page == C::pageChop)
+            {
+                if (c.index == 0)
+                {
+                    setMessage ("SPACCO IL BRANO");
+                    if (onChopRequested)
+                        onChopRequested();
+                }
+                else if (c.index == 1 || c.index == 2)
+                {
+                    const auto preset = c.index == 1 ? cleaner::Preset::ai : cleaner::Preset::mp3;
+                    if (! sampler.drum (drumIndex (selected)).loaded())
+                        setMessage ("PAD VUOTO");
+                    else
+                    {
+                        setMessage ("PULISCO " + cleaner::presetName (preset));
+                        if (onCleanRequested)
+                            onCleanRequested (preset);
+                    }
+                }
+                else if (c.index == 3)
+                    undo();
+                else
+                    setMessage ("");
+            }
+            break;
+
         case C::quantiseValue:
             quantise = c.index;
             setMessage ("PASSO " + control::quantiseName (c.index));
@@ -542,8 +570,81 @@ bool Machine::buttonLit (const control::Control& c) const
         case C::noteRepeat:     return noteRepeat;
         case C::metronome:      return metronome;
         case C::layout:         return group == 1;
+        case C::softKey:        return softKeyLabels()[c.index].isNotEmpty();
         default:                return false;
     }
+}
+
+juce::StringArray Machine::softKeyLabels() const
+{
+    juce::StringArray labels;
+    for (int i = 0; i < 8; ++i)
+        labels.add ("");
+
+    if (page == control::Command::pageChop)
+    {
+        labels.set (0, "SPACCA");
+        labels.set (1, "PULISCI AI");
+        labels.set (2, "PULISCI MP3");
+        labels.set (3, "ANNULLA");
+    }
+
+    return labels;
+}
+
+int Machine::placeSlices (const std::vector<chopper::Slice>& slices)
+{
+    if (slices.empty())
+        return 0;
+
+    int placed = 0;
+    int next = 0;                       // primo pad libero, in indici di suono
+    juce::String lastBank;
+
+    for (const auto& slice : slices)
+    {
+        if (slice.audio.getNumSamples() <= 0)
+            continue;
+
+        // ogni banco dell'analisi comincia su una fila nuova
+        if (slice.bank != lastBank && placed > 0)
+            next = ((next + 7) / 8) * 8;
+        lastBank = slice.bank;
+
+        if (next >= numDrums)
+            break;
+
+        pushUndo (next, "FETTE");
+        if (sampler.loadBuffer (next, slice.name, slice.audio, slice.sampleRate))
+            ++placed;
+
+        ++next;
+    }
+
+    if (placed > 0)
+    {
+        select ({ 0, 1 });
+        setMessage (juce::String (placed) + " FETTE SUI PAD");
+        changed();
+    }
+
+    return placed;
+}
+
+bool Machine::applyCleanedSample (int index, const juce::AudioBuffer<float>& buffer,
+                                  double sourceRate, const juce::String& what)
+{
+    if (buffer.getNumSamples() <= 0 || ! juce::isPositiveAndBelow (index, numDrums))
+        return false;
+
+    const auto name = sampler.drum (index).name;
+    pushUndo (index, what);
+    if (! sampler.loadBuffer (index, name, buffer, sourceRate))
+        return false;
+
+    setMessage ("PULITO " + what);
+    changed();
+    return true;
 }
 
 juce::StringArray Machine::screenLines() const

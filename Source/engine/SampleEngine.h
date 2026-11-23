@@ -34,6 +34,15 @@ public:
     // Carica un file sul pad. Vero se c'e' riuscito.
     bool loadFile (int drumIndex, const juce::File&);
 
+    // Mette sul pad un suono che e' gia' in memoria: le fette tagliate da un
+    // brano e i campioni ripuliti passano da qui, senza scrivere niente su
+    // disco.
+    bool loadBuffer (int drumIndex, const juce::String& name,
+                     const juce::AudioBuffer<float>&, double sourceRate);
+
+    // Il campione del pad, copiato fuori per poterlo lavorare in pace.
+    juce::AudioBuffer<float> copyOf (int drumIndex) const;
+
     // Otto suoni fatti in casa sui primi pad, cosi' la macchina suona subito
     void loadStarterKit();
 
@@ -61,7 +70,7 @@ private:
     juce::AbstractFifo fifo { queueSize };
     std::array<Hit, queueSize> queue;
 
-    juce::CriticalSection loadLock;
+    mutable juce::CriticalSection loadLock;
     juce::AudioFormatManager formats;
     double rate = 44100.0;
     std::uint32_t counter = 0;

@@ -37,6 +37,26 @@ MainComponent::MainComponent()
     loadButton.onClick = [this] { loadOntoSelected(); };
     addAndMakeVisible (loadButton);
 
+    chopButton.onClick = [this] { chooseFileToChop(); };
+    addAndMakeVisible (chopButton);
+
+    cleanButton.onClick = [this]
+    {
+        juce::PopupMenu m;
+        m.addItem (1, "PULISCI AI");
+        m.addItem (2, "PULISCI MP3");
+        m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (cleanButton),
+                         [this] (int choice)
+        {
+            if (choice == 1) runClean (cleaner::Preset::ai);
+            if (choice == 2) runClean (cleaner::Preset::mp3);
+        });
+    };
+    addAndMakeVisible (cleanButton);
+
+    mpc.onChopRequested = [this] { chooseFileToChop(); };
+    mpc.onCleanRequested = [this] (cleaner::Preset p) { runClean (p); };
+
     mpc.onChanged = [this]
     {
         juce::MessageManager::callAsync ([safe = juce::Component::SafePointer<MainComponent> (this)]
@@ -237,6 +257,10 @@ void MainComponent::timerCallback()
 
     t << "    VOCI " << mpc.engine().activeVoices() << "/" << SampleEngine::numVoices;
 
+    const auto work = busyMessage();
+    if (work.isNotEmpty())
+        t << "    " << work;
+
     status.setText (t, juce::dontSendNotification);
 }
 
@@ -261,6 +285,108 @@ void MainComponent::loadOntoSelected()
             refreshSurfaces();
 
         repaint();
+    });
+}
+
+void MainComponent::setBusy (juce::String text)
+{
+    const juce::ScopedLock sl (busyLock);
+    busy = std::move (text);
+}
+
+juce::String MainComponent::busyMessage() const
+{
+    const juce::ScopedLock sl (busyLock);
+    return busy;
+}
+
+void MainComponent::chooseFileToChop()
+{
+    chooser = std::make_unique<juce::FileChooser> (
+        "Scegli il brano da spaccare in fette",
+        juce::File::getSpecialLocation (juce::File::userMusicDirectory),
+        "*.wav;*.aif;*.aiff;*.flac;*.mp3");
+
+    chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                          [this] (const juce::FileChooser& fc)
+    {
+        const auto file = fc.getResult();
+        if (file != juce::File())
+            runChop (file);
+    });
+}
+
+void MainComponent::runChop (const juce::File& file)
+{
+    if (busyMessage().isNotEmpty())
+        return;
+
+    setBusy ("ANALIZZO IL BRANO");
+
+    pool.addJob ([this, file, safe = juce::Component::SafePointer<MainComponent> (this)]
+    {
+        auto result = chopper::chop (file, 60, [this] (double fraction, juce::String step)
+        {
+            setBusy (step.toUpperCase() + " " + juce::String (juce::roundToInt (fraction * 100.0)) + "%");
+        });
+
+        juce::MessageManager::callAsync ([safe, result = std::move (result)]
+        {
+            if (safe == nullptr)
+                return;
+
+            safe->setBusy ({});
+
+            if (! result.ok())
+            {
+                safe->setBusy (result.error.isNotEmpty() ? result.error : juce::String ("NIENTE DA SPACCARE"));
+                return;
+            }
+
+            safe->mpc.placeSlices (result.slices);
+            safe->setBusy (juce::String (juce::roundToInt (result.bpm)) + " BPM"
+                               + (result.key.isNotEmpty() ? "  " + result.key.toUpperCase() : juce::String()));
+            safe->refreshSurfaces();
+            safe->repaint();
+        });
+    });
+}
+
+void MainComponent::runClean (cleaner::Preset preset)
+{
+    if (busyMessage().isNotEmpty())
+        return;
+
+    const int index = mpc.selectedDrumIndex();
+    auto sample = mpc.engine().copyOf (index);
+    if (sample.getNumSamples() <= 0)
+    {
+        setBusy ("PAD VUOTO");
+        return;
+    }
+
+    const double sourceRate = mpc.engine().drum (index).sourceRate;
+    setBusy ("PULISCO " + cleaner::presetName (preset));
+
+    pool.addJob ([this, index, sourceRate, preset, sample = std::move (sample),
+                  safe = juce::Component::SafePointer<MainComponent> (this)]() mutable
+    {
+        auto cleaned = std::move (sample);
+        const bool done = cleaner::clean (cleaned, sourceRate, preset);
+
+        juce::MessageManager::callAsync ([safe, index, sourceRate, preset, done,
+                                          cleaned = std::move (cleaned)]
+        {
+            if (safe == nullptr)
+                return;
+
+            safe->setBusy ({});
+            if (done)
+                safe->mpc.applyCleanedSample (index, cleaned, sourceRate, cleaner::presetName (preset));
+
+            safe->refreshSurfaces();
+            safe->repaint();
+        });
     });
 }
 
@@ -393,6 +519,10 @@ void MainComponent::resized()
     oscButton.setBounds (top.removeFromRight (90).reduced (2));
     top.removeFromRight (8);
     loadButton.setBounds (top.removeFromRight (110).reduced (2));
+    top.removeFromRight (8);
+    chopButton.setBounds (top.removeFromRight (110).reduced (2));
+    top.removeFromRight (8);
+    cleanButton.setBounds (top.removeFromRight (110).reduced (2));
     top.removeFromRight (8);
     bankButton.setBounds (top.removeFromRight (140).reduced (2));
     brandArea = top;

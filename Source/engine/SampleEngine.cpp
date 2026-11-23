@@ -171,6 +171,34 @@ void SampleEngine::process (juce::AudioBuffer<float>& buffer)
     playing.store (active);
 }
 
+bool SampleEngine::loadBuffer (int drumIndex, const juce::String& name,
+                               const juce::AudioBuffer<float>& buffer, double sourceRate)
+{
+    if (! juce::isPositiveAndBelow (drumIndex, machine::numDrums) || buffer.getNumSamples() <= 0)
+        return false;
+
+    juce::AudioBuffer<float> copy (buffer);
+
+    const juce::ScopedLock sl (loadLock);
+    auto& d = drums[(size_t) drumIndex];
+    d.sample = std::move (copy);
+    d.sourceRate = sourceRate > 0 ? sourceRate : rate;
+    d.name = name.toUpperCase();
+    d.start = 0;
+    d.end = 0;
+    d.reverse = false;
+    return true;
+}
+
+juce::AudioBuffer<float> SampleEngine::copyOf (int drumIndex) const
+{
+    if (! juce::isPositiveAndBelow (drumIndex, machine::numDrums))
+        return {};
+
+    const juce::ScopedLock sl (loadLock);
+    return drums[(size_t) drumIndex].sample;
+}
+
 bool SampleEngine::loadFile (int drumIndex, const juce::File& file)
 {
     if (! juce::isPositiveAndBelow (drumIndex, machine::numDrums) || ! file.existsAsFile())

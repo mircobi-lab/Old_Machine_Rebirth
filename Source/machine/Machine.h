@@ -1,6 +1,8 @@
 #pragma once
 
 #include "control/ControlMap.h"
+#include "engine/Chopper.h"
+#include "engine/Cleaner.h"
 #include "engine/SampleEngine.h"
 #include "machine/PadGrid.h"
 
@@ -36,6 +38,9 @@ public:
     PadLight lightFor (PadRef) const;
     bool buttonLit (const control::Control&) const;
     juce::StringArray screenLines() const;
+    // Le etichette degli otto tasti sotto il display, che cambiano con la
+    // pagina. Una casella vuota vuol dire tasto spento.
+    juce::StringArray softKeyLabels() const;
     juce::String lastMessage() const { return message; }
 
     // --- stato che serve anche fuori
@@ -51,7 +56,22 @@ public:
     bool isMuteMode() const { return muteMode; }
     bool isMuted (PadRef p) const { return mutes[(size_t) drumIndex (p)]; }
 
-    std::function<void()> onChanged;    // qualcosa e' cambiato: ridisegna
+    // Le fette di un brano, messe sui pad a blocchi di otto: ogni banco che
+    // arriva dall'analisi parte da un pad multiplo di otto, cosi' la batteria
+    // sta su una fila e la voce su quella dopo. Restituisce quanti pad ha
+    // riempito.
+    int placeSlices (const std::vector<chopper::Slice>&);
+
+    // Rimette sul pad il campione ripulito, tenendo da parte quello di prima
+    // per il tasto ANNULLA.
+    bool applyCleanedSample (int drumIndex, const juce::AudioBuffer<float>&,
+                             double sourceRate, const juce::String& what);
+
+    int selectedDrumIndex() const { return drumIndex (selected); }
+
+    std::function<void()> onChanged;          // qualcosa e' cambiato: ridisegna
+    std::function<void()> onChopRequested;    // spacca un brano in fette
+    std::function<void (cleaner::Preset)> onCleanRequested;  // pulisci il campione del pad
 
 private:
     enum class LevelsType { volume, tune };
