@@ -59,7 +59,10 @@ MainComponent::MainComponent()
 
     mpc.onChanged = [this]
     {
-        juce::MessageManager::callAsync ([safe = juce::Component::SafePointer<MainComponent> (this)]
+        // il puntatore sicuro va preso qui nel corpo: dentro la cattura di una
+        // lambda annidata il compilatore di Windows prende il "this" sbagliato
+        juce::Component::SafePointer<MainComponent> safe (this);
+        juce::MessageManager::callAsync ([safe]
         {
             if (safe != nullptr)
             {
