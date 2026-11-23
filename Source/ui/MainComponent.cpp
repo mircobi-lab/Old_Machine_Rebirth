@@ -63,6 +63,11 @@ MainComponent::MainComponent()
         lastCommand = c.label + " " + (delta > 0 ? "+" : "") + juce::String (delta);
         updateScreen();
     };
+    engine.loadStarterKit();
+
+    loadButton.onClick = [this] { loadOntoSelected(); };
+    addAndMakeVisible (loadButton);
+
     startOsc();
     refreshButtonLights();
 
@@ -80,50 +85,30 @@ MainComponent::~MainComponent()
 
 void MainComponent::prepareToPlay (int, double sampleRate)
 {
-    rate = sampleRate > 0.0 ? sampleRate : 44100.0;
+    engine.prepare (sampleRate);
 }
 
 void MainComponent::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
-    info.clearActiveBufferRegion();
+    if (info.buffer == nullptr || info.numSamples <= 0)
+        return;
 
-    for (auto& c : clicks)
-    {
-        int remaining = c.remaining.load();
-        if (remaining <= 0)
-            continue;
-
-        const float level = c.level.load();
-        const int n = juce::jmin (remaining, info.numSamples);
-
-        for (int i = 0; i < n; ++i)
-        {
-            const float env = (float) (remaining - i) / (float) (0.05 * rate);
-            const float s = level * env * env * (float) std::sin (2.0 * juce::MathConstants<double>::pi
-                                                                  * 220.0 * (double) i / rate);
-            for (int ch = 0; ch < info.buffer->getNumChannels(); ++ch)
-                info.buffer->addSample (ch, info.startSample + i, s);
-        }
-        c.remaining.store (remaining - n);
-    }
+    // una finestra sul pezzo di buffer che tocca a noi, senza copiare niente
+    juce::AudioBuffer<float> view (info.buffer->getArrayOfWritePointers(),
+                                   info.buffer->getNumChannels(),
+                                   info.startSample, info.numSamples);
+    engine.process (view);
 }
 
 void MainComponent::releaseResources() {}
 
 void MainComponent::hit (machine::PadRef p, int velocity)
 {
+    const int index = machine::drumIndex (p);
     selected = p;
-    lastHitDrum.store (machine::drumIndex (p));
+    lastHitDrum.store (index);
     padLight (p, Push2Panel::PadLight::playing);
-
-    for (auto& c : clicks)
-        if (c.remaining.load() <= 0)
-        {
-            c.level.store (juce::jlimit (0.0f, 1.0f, (float) velocity / 127.0f) * 0.4f);
-            c.remaining.store ((int) (0.05 * rate));
-            break;
-        }
-
+    engine.trigger (index, juce::jlimit (0.0f, 1.0f, (float) velocity / 127.0f));
     updateScreen();
 }
 
@@ -156,8 +141,7 @@ void MainComponent::startOsc()
     };
     osc->onPadUp = [this] (machine::PadRef p)
     {
-        padLight (p, machine::drumIndex (p) == machine::drumIndex (selected)
-                         ? Push2Panel::PadLight::selected : Push2Panel::PadLight::empty);
+        padLight (p, lightFor (p));
     };
     osc->onCommand = [this] (const control::Control& c, bool down) { command (c, down); repaint(); };
     osc->onEncoder = [this] (const control::Control& c, int delta)
@@ -204,6 +188,90 @@ void MainComponent::showOscSettings()
         }
         delete w;
     }), false);
+}
+
+Push2Panel::PadLight MainComponent::lightFor (machine::PadRef p) const
+{
+    if (machine::drumIndex (p) == machine::drumIndex (selected))
+        return Push2Panel::PadLight::selected;
+    return engine.drum (machine::drumIndex (p)).loaded() ? Push2Panel::PadLight::loaded
+                                                         : Push2Panel::PadLight::empty;
+}
+
+std::optional<machine::PadRef> MainComponent::padAt (juce::Point<int> point) const
+{
+    const int group = push != nullptr ? push->getBankGroup() : 0;
+
+    for (int row = 0; row < 8; ++row)
+        for (int col = 0; col < 8; ++col)
+            if (cellBounds (row, col).contains (point))
+                return machine::padForCell (row, col, group);
+
+    return std::nullopt;
+}
+
+void MainComponent::loadOntoSelected()
+{
+    chooser = std::make_unique<juce::FileChooser> (
+        "Scegli un suono per il pad " + machine::bankName (selected.bank) + juce::String (selected.pad),
+        juce::File::getSpecialLocation (juce::File::userMusicDirectory),
+        "*.wav;*.aif;*.aiff;*.flac;*.mp3");
+
+    chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                          [this] (const juce::FileChooser& fc)
+    {
+        const auto file = fc.getResult();
+        if (file == juce::File())
+            return;
+
+        const int index = machine::drumIndex (selected);
+        if (engine.loadFile (index, file))
+        {
+            lastCommand = "CARICATO " + engine.drum (index).name;
+            padLight (selected, lightFor (selected));
+            updateScreen();
+            repaint();
+        }
+        else
+            lastCommand = "NON LEGGO QUEL FILE";
+    });
+}
+
+bool MainComponent::isInterestedInFileDrag (const juce::StringArray& files)
+{
+    for (const auto& f : files)
+        if (juce::File (f).hasFileExtension ("wav;aif;aiff;flac;mp3;ogg"))
+            return true;
+    return false;
+}
+
+void MainComponent::filesDropped (const juce::StringArray& files, int x, int y)
+{
+    // Il suono va sul pad sotto il dito; se si lascia fuori dalla griglia, su
+    // quello scelto. Piu' file di seguito riempiono i pad uno dopo l'altro.
+    auto target = padAt ({ x, y }).value_or (selected);
+
+    for (const auto& name : files)
+    {
+        const juce::File file (name);
+        if (! file.existsAsFile())
+            continue;
+
+        const int index = machine::drumIndex (target);
+        if (engine.loadFile (index, file))
+        {
+            selected = target;
+            lastCommand = "CARICATO " + engine.drum (index).name;
+            padLight (target, lightFor (target));
+        }
+
+        if (index + 1 >= machine::numDrums)
+            break;
+        target = machine::drumAt (index + 1);
+    }
+
+    updateScreen();
+    repaint();
 }
 
 void MainComponent::padLight (machine::PadRef p, Push2Panel::PadLight light)
@@ -286,14 +354,17 @@ void MainComponent::updateScreen()
 {
     const int drum = lastHitDrum.load();
     juce::StringArray lines;
+    juce::ignoreUnused (drum);
+    const auto& d = engine.drum (machine::drumIndex (selected));
+
     lines.add ("#" + pageName);
     lines.add ("PAD|" + machine::bankName (selected.bank) + juce::String (selected.pad));
-    lines.add ("SUONO|" + juce::String (drum < 0 ? juce::String ("-") : juce::String (drum + 1)));
+    lines.add ("SUONO|" + (d.loaded() ? d.name : juce::String ("VUOTO")));
     lines.add ("QUANTIZZA|" + control::quantiseName (quantise));
-    lines.add ("LIVELLO|--");
-    lines.add ("ACCORDA|--");
-    lines.add ("INIZIO|--");
-    lines.add ("FINE|--");
+    lines.add ("LIVELLO|" + juce::String (juce::roundToInt (d.level * 100.0f)));
+    lines.add ("ACCORDA|" + juce::String (d.tuneSemitones > 0 ? "+" : "") + juce::String (d.tuneSemitones));
+    lines.add ("VOCI|" + juce::String (engine.activeVoices()) + "/" + juce::String (SampleEngine::numVoices));
+    lines.add ("SUONI|" + juce::String (engine.loadedCount()));
     lines.add ("TASTO|" + (lastCommand.isEmpty() ? juce::String ("-") : lastCommand));
     if (push != nullptr)
         push->setScreenLines (lines);
@@ -358,15 +429,32 @@ void MainComponent::paint (juce::Graphics& g)
             const auto cell = cellBounds (row, col).reduced (3);
             const bool isSelected = machine::drumIndex (p) == machine::drumIndex (selected);
 
+            const auto& d = engine.drum (machine::drumIndex (p));
+
             g.setColour (juce::Colour (0xff121314));
             g.fillRoundedRectangle (cell.toFloat(), 3.0f);
-            g.setColour (juce::Colour (isSelected ? 0xffffb020 : 0xff34363a));
+
+            if (d.loaded())
+            {
+                g.setColour (juce::Colour (0xff3d8bff).withAlpha (0.18f));
+                g.fillRoundedRectangle (cell.toFloat(), 3.0f);
+            }
+
+            g.setColour (juce::Colour (isSelected ? 0xffffb020 : (d.loaded() ? 0xff3d8bff : 0xff34363a)));
             g.drawRoundedRectangle (cell.toFloat(), 3.0f, isSelected ? 1.6f : 1.0f);
 
             g.setColour (juce::Colour (0xff9b9da2));
             g.setFont (MBStudioLookAndFeel::titleFont (14.0f));
             g.drawText (machine::bankName (p.bank) + juce::String (p.pad),
                         cell.reduced (5), juce::Justification::bottomLeft, false);
+
+            if (d.loaded())
+            {
+                g.setColour (juce::Colour (0xfff3f3f1));
+                g.setFont (MBStudioLookAndFeel::titleFont (12.0f));
+                g.drawText (d.name, cell.reduced (4).removeFromTop (16),
+                            juce::Justification::topLeft, false);
+            }
         }
 
     // I quattro quadranti sono quattro banchi: linea incisa fra loro
@@ -383,6 +471,8 @@ void MainComponent::resized()
     audioButton.setBounds (top.removeFromRight (110).reduced (2));
     top.removeFromRight (8);
     oscButton.setBounds (top.removeFromRight (90).reduced (2));
+    top.removeFromRight (8);
+    loadButton.setBounds (top.removeFromRight (110).reduced (2));
     top.removeFromRight (8);
     bankButton.setBounds (top.removeFromRight (140).reduced (2));
     brandArea = top;

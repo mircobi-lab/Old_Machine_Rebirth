@@ -44,6 +44,21 @@ mostra quattro banchi alla volta, a quadranti:
 +-----------+-----------+     sta in basso a sinistra
 ```
 
+## Su che computer gira
+
+| | Mac | Windows | Linux |
+|---|---|---|---|
+| Suoni e pad | si' | si' | si' |
+| Pannello OSC (telefono, tablet) | si' | si' | si' |
+| Pad e tasti del Push 2 via MIDI | si' | si' | si' |
+| Display del Push 2 via USB | si' | serve il driver WinUSB, con Zadig | si', con le regole udev |
+
+Il display del Push parla USB diretto, non MIDI: su Mac funziona senza fare
+niente, su Windows il sistema non lascia parlare con la periferica finche' non
+le si mette il driver WinUSB (si fa con Zadig), e su Linux serve il permesso di
+accesso al dispositivo 2982:1967 per l'utente, che si da' con una regola udev.
+Pad, tasti e rotativi invece passano dal MIDI e funzionano ovunque.
+
 ## Compilare
 
 La compilazione si fa su GitHub Actions a ogni push, e l'app pronta si scarica
