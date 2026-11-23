@@ -98,7 +98,7 @@ add_test(NAME RebirthTests
 # Genera il file di sessione di Open Stage Control dalla stessa tabella dei
 # comandi che usa il Push, cosi' le due versioni non vanno fuori passo.
 juce_add_console_app(OscTemplate PRODUCT_NAME "OscTemplate")
-target_sources(OscTemplate PRIVATE tools/osc-template/Main.cpp ${REBIRTH_CORE_SOURCES})
+target_sources(OscTemplate PRIVATE tools/osc-template/Main.cpp tools/osc-template/TouchOsc.cpp ${REBIRTH_CORE_SOURCES})
 target_include_directories(OscTemplate PRIVATE Source)
 target_compile_definitions(OscTemplate PRIVATE
     JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_APPLICATION_NAME_STRING="OscTemplate")

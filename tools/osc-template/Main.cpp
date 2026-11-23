@@ -7,6 +7,8 @@
 //     cmake --build build --target OscTemplate
 //     ./build/OscTemplate_artefacts/OscTemplate tools/osc/old-machine-rebirth.json
 
+#include "TouchOsc.h"
+
 #include "control/ControlMap.h"
 #include "machine/PadGrid.h"
 
@@ -211,5 +213,14 @@ int main (int argc, char** argv)
     }
 
     std::cout << "scritto " << file.getFullPathName() << std::endl;
+
+    // e il banco per TouchOSC Mk1, accanto all'altro
+    const auto touch = file.getSiblingFile (file.getFileNameWithoutExtension() + ".touchosc");
+    if (! touchosc::write (touch))
+    {
+        std::cerr << "non riesco a scrivere " << touch.getFullPathName() << std::endl;
+        return 1;
+    }
+    std::cout << "scritto " << touch.getFullPathName() << std::endl;
     return 0;
 }

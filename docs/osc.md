@@ -46,6 +46,33 @@ sulla porta 9000, e nel tasto OSC si mette l'indirizzo del telefono come
 indirizzo a cui rispondere. L'indirizzo del Mac si legge in Impostazioni di
 rete, oppure da terminale con `ipconfig getifaddr en0`.
 
+## TouchOSC Mk1 (iPhone, iPad)
+
+In `tools/osc/old-machine-rebirth.touchosc` c'e' il banco gia' fatto per
+TouchOSC Mk1, cinque pagine in verticale: PAD con la griglia 8x8 e i LED,
+PANNELLO con pagine, tasti funzione, trasporto e quantizzazione, ROTATIVI coi
+piu' e meno, SCHERMO coi campi del display, ALTRO con tutti gli altri tasti.
+
+Per installarlo: si apre il file col TouchOSC Editor sul Mac e si manda al
+telefono col pulsante Sync, tenendo aperta la pagina di configurazione di
+TouchOSC sull'iPhone.
+
+Poi sul telefono, nella configurazione OSC:
+
+- **Host**: l'indirizzo del Mac (`ipconfig getifaddr en0` in Terminale)
+- **Port (outgoing)**: 9000
+- **Port (incoming)**: 9001
+
+E nella macchina, col tasto OSC, si mette l'indirizzo dell'iPhone come
+indirizzo a cui rispondere. Con l'iPhone che fa da access point, l'indirizzo
+del telefono di solito finisce per .1 sulla stessa rete del Mac.
+
+TouchOSC Mk1 non sa mandare argomenti in testa al messaggio, quindi usa gli
+indirizzi lunghi: `/pad/3/13`, `/button/85`, `/encoder/2/1`, `/tempo/-1`. La
+macchina capisce tutte e due le forme, quella corta e quella lunga.
+
+Il file si rigenera insieme all'altro col target `OscTemplate`.
+
 ## Banco di comandi pronto per Open Stage Control
 
 In `tools/osc/old-machine-rebirth.json` c'e' una sessione gia' fatta: cinque
