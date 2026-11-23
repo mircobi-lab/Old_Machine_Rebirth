@@ -23,6 +23,7 @@ int nextCount (int current, int direction);
 // questo, a ogni attacco si sente il clic.
 std::vector<chopper::Slice> cut (const juce::AudioBuffer<float>&, double sampleRate,
                                  int pieces, const juce::String& baseName,
-                                 const juce::String& bank = "FETTE");
+                                 const juce::String& bank = "FETTE",
+                                 sound::Kind = sound::Kind::giro);
 
 } // namespace slicer

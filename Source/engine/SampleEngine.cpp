@@ -172,7 +172,8 @@ void SampleEngine::process (juce::AudioBuffer<float>& buffer)
 }
 
 bool SampleEngine::loadBuffer (int drumIndex, const juce::String& name,
-                               const juce::AudioBuffer<float>& buffer, double sourceRate)
+                               const juce::AudioBuffer<float>& buffer, double sourceRate,
+                               sound::Kind kind)
 {
     if (! juce::isPositiveAndBelow (drumIndex, machine::numDrums) || buffer.getNumSamples() <= 0)
         return false;
@@ -184,6 +185,9 @@ bool SampleEngine::loadBuffer (int drumIndex, const juce::String& name,
     d.sample = std::move (copy);
     d.sourceRate = sourceRate > 0 ? sourceRate : rate;
     d.name = name.toUpperCase();
+    // se chi carica sa di che famiglia e' il suono lo dice, altrimenti si
+    // indovina dal nome
+    d.kind = kind != sound::Kind::generico ? kind : sound::guessFromName (d.name);
     d.start = 0;
     d.end = 0;
     d.reverse = false;
@@ -219,6 +223,7 @@ bool SampleEngine::loadFile (int drumIndex, const juce::File& file)
     d.sample = std::move (buffer);
     d.sourceRate = reader->sampleRate > 0 ? reader->sampleRate : rate;
     d.name = file.getFileNameWithoutExtension().toUpperCase();
+    d.kind = sound::guessFromName (d.name);
     d.start = 0;
     d.end = 0;
     d.reverse = false;

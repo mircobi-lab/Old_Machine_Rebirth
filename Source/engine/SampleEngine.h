@@ -38,7 +38,8 @@ public:
     // brano e i campioni ripuliti passano da qui, senza scrivere niente su
     // disco.
     bool loadBuffer (int drumIndex, const juce::String& name,
-                     const juce::AudioBuffer<float>&, double sourceRate);
+                     const juce::AudioBuffer<float>&, double sourceRate,
+                     sound::Kind = sound::Kind::generico);
 
     // Il campione del pad, copiato fuori per poterlo lavorare in pace.
     juce::AudioBuffer<float> copyOf (int drumIndex) const;

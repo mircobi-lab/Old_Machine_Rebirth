@@ -7,28 +7,58 @@ namespace
 {
 struct Rgb { std::uint8_t r, g, b; };
 
-// I colori dei LED dello stile MBStudio: il colore sta solo nei LED
+// La tavolozza che scriviamo nel Push.
+//
+// Le prime due voci sono gli stati che non dipendono dal suono: il pad vuoto e
+// quello mutato. Dopo vengono tre voci per ogni famiglia (fermo, scelto, che
+// suona), cosi' la batteria resta grigia e le voci restano celesti anche
+// mentre si suona. In tutto 2 + 8*3 = 26 voci.
 constexpr int firstPaletteIndex = 1;
-constexpr Rgb paletteColours[] = {
-    { 0x1b, 0x1d, 0x1f },   // vuoto, quasi spento
-    { 0x3d, 0x8b, 0xff },   // caricato, blu
-    { 0xff, 0xb0, 0x20 },   // scelto, ambra
-    { 0xf3, 0xf3, 0xf1 },   // che suona, bianco
-    { 0xff, 0x3b, 0x30 },   // mutato, rosso
-};
-constexpr int numPaletteEntries = (int) (sizeof (paletteColours) / sizeof (Rgb));
+constexpr int statesPerKind = 3;
+constexpr Rgb emptyColour { 0x1b, 0x1d, 0x1f };     // vuoto, quasi spento
+constexpr Rgb mutedColour { 0xff, 0x3b, 0x30 };     // mutato, rosso
+
+Rgb toRgb (juce::Colour c)
+{
+    return { c.getRed(), c.getGreen(), c.getBlue() };
 }
 
-int Push2Panel::paletteIndexFor (machine::PadLight l)
+Rgb colourForEntry (int entry)
 {
+    if (entry == 0)
+        return emptyColour;
+    if (entry == 1)
+        return mutedColour;
+
+    const int which = entry - 2;
+    const auto kind = sound::kindFromIndex (which / statesPerKind);
+
+    switch (which % statesPerKind)
+    {
+        case 0:  return toRgb (sound::colour (kind));
+        case 1:  return toRgb (sound::colourSelected (kind));
+        default: return toRgb (sound::colourPlaying (kind));
+    }
+}
+}
+
+int Push2Panel::numberOfPaletteEntries()
+{
+    return 2 + sound::numKinds * statesPerKind;
+}
+
+int Push2Panel::paletteIndexFor (machine::PadLight l, sound::Kind kind)
+{
+    const int base = firstPaletteIndex + 2 + sound::indexOf (kind) * statesPerKind;
+
     switch (l)
     {
         case machine::PadLight::off:      return 0;             // nero, voce di serie
         case machine::PadLight::empty:    return firstPaletteIndex;
-        case machine::PadLight::loaded:   return firstPaletteIndex + 1;
-        case machine::PadLight::selected: return firstPaletteIndex + 2;
-        case machine::PadLight::playing:  return firstPaletteIndex + 3;
-        case machine::PadLight::muted:    return firstPaletteIndex + 4;
+        case machine::PadLight::muted:    return firstPaletteIndex + 1;
+        case machine::PadLight::loaded:   return base;
+        case machine::PadLight::selected: return base + 1;
+        case machine::PadLight::playing:  return base + 2;
     }
     return 0;
 }
@@ -60,7 +90,9 @@ Push2Panel::Push2Panel (juce::Typeface::Ptr displayFont)
     : font (std::move (displayFont))
 {
     lights.fill (machine::PadLight::empty);
+    kinds.fill (sound::Kind::generico);
     onScreen.fill (machine::PadLight::off);
+    onScreenEntry.fill (-1);
 
     display = std::make_unique<Push2Display>();
     reconnect();
@@ -130,13 +162,15 @@ void Push2Panel::reconnect()
 
 void Push2Panel::sendPalette()
 {
+    const int count = numberOfPaletteEntries();
+
     std::vector<juce::MidiMessage> out;
-    for (int i = 0; i < numPaletteEntries; ++i)
+    for (int i = 0; i < count; ++i)
         out.push_back (sysexFor ({ 0xF0, 0x00, 0x21, 0x1D, 0x01, 0x01, 0x04,
                                    (std::uint8_t) (firstPaletteIndex + i), 0xF7 }));   // leggi
-    for (int i = 0; i < numPaletteEntries; ++i)
+    for (int i = 0; i < count; ++i)
     {
-        const auto& c = paletteColours[i];
+        const auto c = colourForEntry (i);
         const auto white = (std::uint8_t) ((c.r * 2 + c.g * 5 + c.b) / 8);
         out.push_back (sysexFor (push2::setPaletteEntry (firstPaletteIndex + i, c.r, c.g, c.b, white)));
     }
@@ -166,7 +200,8 @@ void Push2Panel::lightAllButtons()
     // Tutti i tasti che la macchina usa stanno accesi smorti, cosi' si vede al
     // buio cosa c'e'; chi li accende forte e' la pagina aperta.
     for (const auto& b : control::buttons())
-        setButtonLight (b.number, b.rgb ? paletteIndexFor (machine::PadLight::loaded) : 24);
+        setButtonLight (b.number, b.rgb ? paletteIndexFor (machine::PadLight::loaded,
+                                                           sound::Kind::giro) : 24);
 }
 
 void Push2Panel::setButtonLight (int cc, int value)
@@ -180,13 +215,14 @@ void Push2Panel::setButtonLight (int cc, int value)
         output->sendMessageNow (juce::MidiMessage::controllerEvent (1, cc, juce::jlimit (0, 127, value)));
 }
 
-void Push2Panel::setPadLight (machine::PadRef p, machine::PadLight l)
+void Push2Panel::setPadLight (machine::PadRef p, machine::PadLight l, sound::Kind kind)
 {
     const int i = machine::drumIndex (p);
     if (! juce::isPositiveAndBelow (i, machine::numDrums))
         return;
     const juce::ScopedLock sl (lock);
     lights[(size_t) i] = l;
+    kinds[(size_t) i] = kind;
 }
 
 void Push2Panel::setBankGroup (int group)
@@ -224,16 +260,20 @@ void Push2Panel::refreshLeds (bool everything)
         {
             const auto p = machine::padForCell (row, col, bankGroup);
             machine::PadLight want;
+            sound::Kind kind;
             {
                 const juce::ScopedLock sl (lock);
                 want = lights[(size_t) machine::drumIndex (p)];
+                kind = kinds[(size_t) machine::drumIndex (p)];
             }
             const int cell = row * 8 + col;
-            if (! everything && onScreen[(size_t) cell] == want)
+            const int entry = paletteIndexFor (want, kind);
+            if (! everything && onScreenEntry[(size_t) cell] == entry)
                 continue;
             onScreen[(size_t) cell] = want;
+            onScreenEntry[(size_t) cell] = entry;
             out.push_back (juce::MidiMessage::noteOn (1, push2::padNote (row, col),
-                                                      (juce::uint8) paletteIndexFor (want)));
+                                                      (juce::uint8) entry));
         }
     send (out);
 }
@@ -285,6 +325,15 @@ void Push2Panel::handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMe
         const auto e = control::forEncoder (m.getControllerNumber());
         if (e.command != control::Command::none && onEncoder != nullptr)
             onEncoder (e, push2::encoderDelta (m.getControllerValue()));
+        return;
+    }
+
+    if (m.isPitchWheel())
+    {
+        // la striscia sotto il display manda il pitch bend: 0 in basso, tutto
+        // in cima
+        if (onTouchStrip != nullptr)
+            onTouchStrip ((float) m.getPitchWheelValue() / 16383.0f);
         return;
     }
 

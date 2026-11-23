@@ -1,5 +1,7 @@
 #pragma once
 
+#include "engine/SoundKind.h"
+
 #include <juce_audio_basics/juce_audio_basics.h>
 
 // Un suono dei 128 della macchina, con i parametri che aveva l'originale.
@@ -8,6 +10,7 @@ struct Drum
     juce::AudioBuffer<float> sample;
     double sourceRate = 44100.0;
     juce::String name;
+    sound::Kind kind = sound::Kind::generico;   // decide il colore del pad
 
     float level = 0.8f;          // 0..1
     int tuneSemitones = 0;       // -24..+24, come l'accordatura dell'MPC

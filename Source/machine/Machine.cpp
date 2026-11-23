@@ -25,6 +25,8 @@ Machine::Machine()
 void Machine::prepare (double sampleRate)
 {
     rec.prepare (sampleRate, 2);
+    seq.prepare (sampleRate);
+    applyQuantiseToSequencer();
     rate = sampleRate > 0.0 ? sampleRate : 44100.0;
     sampler.prepare (rate);
     stepCounter = 0.0;
@@ -77,6 +79,10 @@ void Machine::process (juce::AudioBuffer<float>& buffer)
     else
         stepCounter = 0.0;
 
+    // il sequencer batte i suoi colpi prima che il campionatore lavori, cosi'
+    // suonano nello stesso blocco
+    seq.process (numSamples, tempoAtomic.load(), sampler);
+
     sampler.process (buffer);
 
     // il clic del metronomo, generato qui e non da un campione
@@ -95,6 +101,10 @@ void Machine::process (juce::AudioBuffer<float>& buffer)
     }
 
     buffer.applyGain (masterGain);
+
+    // RICAMPIONA: il registratore prende quello che esce, non quello che entra
+    if (resampling)
+        rec.processInput (buffer.getArrayOfReadPointers(), buffer.getNumChannels(), numSamples);
 }
 
 //==============================================================================
@@ -113,6 +123,16 @@ void Machine::hit (PadRef p, int velocity)
         mutes[(size_t) index] = ! mutes[(size_t) index];
         setMessage (juce::String (mutes[(size_t) index] ? "MUTO " : "SUONA ")
                         + bankName (p.bank) + juce::String (p.pad));
+        select (p);
+        return;
+    }
+
+    if (eraseMode && seq.isPlaying())
+    {
+        // CANCELLA mentre gira: toglie i colpi di quel pad dalla sequenza,
+        // come sulla macchina vera, invece di buttare via il campione
+        seq.eraseDrum (index);
+        setMessage ("CANCELLATO " + bankName (p.bank) + juce::String (p.pad));
         select (p);
         return;
     }
@@ -141,6 +161,11 @@ void Machine::hit (PadRef p, int velocity)
         select (p);
         return;
     }
+
+    // nella sequenza finisce il colpo vero, non le pressioni per mutare,
+    // cancellare o copiare
+    if (padsIntoSequence)
+        seq.recordHit (index, velocity);
 
     int playIndex = index;
     float gain = fullLevel ? 1.0f : juce::jlimit (0.0f, 1.0f, (float) velocity / 127.0f);
@@ -337,8 +362,48 @@ void Machine::command (const control::Control& c, bool down)
                     rec.setMonitoring (! rec.monitoring());
                     setMessage ("ASCOLTA " + juce::String (rec.monitoring() ? "ACCESO" : "SPENTO"));
                 }
+                else if (c.index == 4)
+                {
+                    resampling = ! resampling;
+                    if (resampling)
+                        rec.startNow();
+                    else
+                    {
+                        rec.stop();
+                        checkRecorder();
+                    }
+                    setMessage (resampling ? "RICAMPIONA ACCESO" : "RICAMPIONA SPENTO");
+                }
+                else if (c.index == 5)
+                {
+                    if (onToLibrary)
+                        onToLibrary();
+                    setMessage ("IN LIBRERIA");
+                }
+                else if (c.index == 6)
+                    undo();
                 else
                     setMessage ("");
+            }
+            else if (page == C::pageSequence)
+            {
+                switch (c.index)
+                {
+                    case 0: seq.toggleRecord();
+                            setMessage (seq.isRecording() ? "REC SEQ ACCESO" : "REC SEQ SPENTO"); break;
+                    case 1: seq.toggleOverdub();
+                            setMessage (seq.isOverdub() ? "SOVRAINCIDI ACCESO" : "SOVRAINCIDI SPENTO"); break;
+                    case 2: seq.setTimingCorrect (! seq.timingCorrect());
+                            setMessage (seq.timingCorrect() ? "CORREGGI ACCESO" : "CORREGGI SPENTO"); break;
+                    case 3: seq.clearSequence(); setMessage ("CANCELLA SEQ"); break;
+                    case 4: seq.newSequence();
+                            setMessage ("NUOVA SEQ " + juce::String (seq.sequenceIndex() + 1)); break;
+                    case 5: seq.doubleLength(); setMessage ("BATTUTE " + juce::String (seq.bars())); break;
+                    case 6: seq.halveLength(); setMessage ("BATTUTE " + juce::String (seq.bars())); break;
+                    case 7: seq.setBars (seq.bars() >= 8 ? 1 : seq.bars() * 2);
+                            setMessage ("BATTUTE " + juce::String (seq.bars())); break;
+                    default: break;
+                }
             }
             else if (page == C::pageDisk)
             {
@@ -394,6 +459,7 @@ void Machine::command (const control::Control& c, bool down)
 
         case C::quantiseValue:
             quantise = c.index;
+            applyQuantiseToSequencer();
             setMessage ("PASSO " + control::quantiseName (c.index));
             break;
 
@@ -479,9 +545,185 @@ void Machine::command (const control::Control& c, bool down)
             break;
         }
 
+        case C::play:
+            seq.play();
+            setMessage ("PLAY");
+            break;
+
+        case C::recordSequence:
+            seq.toggleRecord();
+            setMessage (seq.isRecording() ? "REC SEQ ACCESO" : "REC SEQ SPENTO");
+            break;
+
+        case C::overdub:
+            seq.toggleOverdub();
+            setMessage (seq.isOverdub() ? "SOVRAINCIDI ACCESO" : "SOVRAINCIDI SPENTO");
+            break;
+
+        case C::newSequence:
+            seq.newSequence();
+            setMessage ("NUOVA SEQ " + juce::String (seq.sequenceIndex() + 1));
+            break;
+
+        case C::duplicate:
+            // COPIA sul trasporto: la sequenza di adesso finisce in una vuota
+            {
+                const int from = seq.sequenceIndex();
+                int destination = from;
+                for (int i = 0; i < Sequencer::numSequences; ++i)
+                    if (seq.eventCount (i) == 0)
+                    {
+                        destination = i;
+                        break;
+                    }
+
+                seq.copyTo (destination);
+                seq.setSequence (destination);
+                setMessage ("COPIA SEQ " + juce::String (destination + 1));
+            }
+            break;
+
+        case C::fixedLength:
+            {
+                const int next = seq.bars() >= 8 ? 1 : seq.bars() * 2;
+                seq.setBars (next);
+                setMessage ("BATTUTE " + juce::String (seq.bars()));
+            }
+            break;
+
+        case C::doubleLength:
+            if (shift)
+            {
+                seq.halveLength();
+                setMessage ("BATTUTE " + juce::String (seq.bars()));
+            }
+            else
+            {
+                seq.doubleLength();
+                setMessage ("RADDOPPIA " + juce::String (seq.bars()));
+            }
+            break;
+
+        case C::timingCorrect:
+            seq.setTimingCorrect (! seq.timingCorrect());
+            setMessage (seq.timingCorrect() ? "CORREGGI ACCESO" : "CORREGGI SPENTO");
+            break;
+
+        case C::resample:
+            resampling = ! resampling;
+            if (resampling)
+            {
+                rec.startNow();
+                setMessage ("RICAMPIONA ACCESO");
+            }
+            else
+            {
+                rec.stop();
+                checkRecorder();
+                setMessage ("RICAMPIONA SPENTO");
+            }
+            break;
+
+        case C::pageLeft:
+            seq.setSequence (juce::jmax (0, seq.sequenceIndex() - 1));
+            setMessage ("SEQUENZA " + juce::String (seq.sequenceIndex() + 1));
+            break;
+
+        case C::pageRight:
+            seq.setSequence (juce::jmin (Sequencer::numSequences - 1, seq.sequenceIndex() + 1));
+            setMessage ("SEQUENZA " + juce::String (seq.sequenceIndex() + 1));
+            break;
+
+        case C::up:    moveSelection (-1, 0); break;
+        case C::down:  moveSelection (1, 0);  break;
+        case C::left:  moveSelection (0, -1); break;
+        case C::right: moveSelection (0, 1);  break;
+
+        case C::recordSample:
+            page = C::pageSample;
+            pageName = "CAMPIONA";
+            rec.arm();
+            setMessage ("ARMATO SOGLIA " + juce::String (rec.threshold()));
+            break;
+
+        case C::playMode:
+            padsIntoSequence = ! padsIntoSequence;
+            setMessage (padsIntoSequence ? "SUONA E REGISTRA" : "SUONA SENZA REGISTRARE");
+            break;
+
+        case C::sequenceMode:
+            page = C::pageSequence;
+            pageName = "SEQUENZA";
+            setMessage ("SEQUENZE");
+            break;
+
+        case C::padSolo:
+            soloMode = ! soloMode;
+            if (soloMode)
+            {
+                const int keep = drumIndex (selected);
+                for (int i = 0; i < numDrums; ++i)
+                    mutes[(size_t) i] = i != keep;
+                setMessage ("SOLO QUESTO");
+            }
+            else
+            {
+                mutes.fill (false);
+                setMessage ("TUTTI SUONANO");
+            }
+            break;
+
+        case C::padParameters:
+            page = C::pageSound;
+            pageName = "SUONO";
+            setMessage ("PARAMETRI");
+            break;
+
+        case C::drumMix:
+            page = C::pageMix;
+            pageName = "MIX";
+            setMessage ("MIXER");
+            break;
+
+        case C::sequenceList:
+            page = C::pageSequence;
+            pageName = "SEQUENZA";
+            setMessage ("SEQUENZE");
+            break;
+
+        case C::addTrack:
+            seq.newSequence();
+            setMessage ("NUOVA SEQ " + juce::String (seq.sequenceIndex() + 1));
+            break;
+
+        case C::browse:
+            if (onBrowseLibrary)
+                onBrowseLibrary();
+            setMessage ("LIBRERIA");
+            break;
+
+        case C::master:
+            page = C::pageMix;
+            pageName = "MIX";
+            setMessage ("GENERALE " + juce::String (juce::roundToInt (masterGain * 100.0f)));
+            break;
+
+        case C::setup:
+            if (onSetup)
+                onSetup();
+            setMessage ("SETUP");
+            break;
+
+        case C::handBackToLive:
+            sampler.stopAll();
+            seq.stop();
+            setMessage ("A LIVE");
+            break;
+
         case C::stop:
             sampler.stopAll();
             repeatRunning.store (false);
+            seq.stop();
             setMessage ("FERMO");
             break;
 
@@ -571,9 +813,15 @@ void Machine::changeParameter (int which, int steps)
             break;
 
         case 7:
-            bpm = juce::jlimit (30.0, 300.0, bpm + steps);
-            tempoAtomic.store (bpm);
-            setMessage ("TEMPO " + juce::String (juce::roundToInt (bpm)));
+            // la famiglia del suono, cioe' il colore del pad: il tempo ha il
+            // suo rotativo a sinistra, qui serviva piu' questo
+            if (steps != 0)
+            {
+                const int next = juce::jlimit (0, sound::numKinds - 1,
+                                               sound::indexOf (d.kind) + (steps > 0 ? 1 : -1));
+                d.kind = sound::kindFromIndex (next);
+                setMessage ("FAMIGLIA " + sound::name (d.kind));
+            }
             break;
 
         default:
@@ -606,7 +854,8 @@ void Machine::encoder (const control::Control& c, int steps)
             break;
 
         case C::swing:
-            setMessage ("SWING");     // arrivera' col sequencer
+            seq.setSwing (seq.swing() + steps);
+            setMessage ("SWING " + juce::String (seq.swing()));
             break;
 
         default:
@@ -630,6 +879,18 @@ PadLight Machine::lightFor (PadRef p) const
     return sampler.drum (index).loaded() ? PadLight::loaded : PadLight::empty;
 }
 
+void Machine::setMasterGain (float gain)
+{
+    masterGain = juce::jlimit (0.0f, 1.0f, gain);
+    setMessage ("VOLUME " + juce::String (juce::roundToInt (masterGain * 100.0f)));
+    changed();
+}
+
+sound::Kind Machine::kindFor (PadRef p) const
+{
+    return sampler.drum (drumIndex (p)).kind;
+}
+
 bool Machine::buttonLit (const control::Control& c) const
 {
     using C = control::Command;
@@ -648,6 +909,14 @@ bool Machine::buttonLit (const control::Control& c) const
         case C::metronome:      return metronome;
         case C::layout:         return group == 1;
         case C::softKey:        return softKeyLabels()[c.index].isNotEmpty();
+        case C::play:           return seq.isPlaying();
+        case C::recordSequence: return seq.isRecording();
+        case C::overdub:        return seq.isOverdub();
+        case C::timingCorrect:  return seq.timingCorrect();
+        case C::padSolo:        return soloMode;
+        case C::resample:       return resampling;
+        case C::recordSample:   return rec.isWaiting() || rec.isRecording();
+        case C::playMode:       return ! padsIntoSequence;
         default:                return false;
     }
 }
@@ -662,7 +931,7 @@ bool Machine::checkRecorder()
     pushUndo (index, lang::t ("REGISTRA"));
 
     const auto name = "REG " + juce::String (++recordings);
-    if (! sampler.loadBuffer (index, name, recorded, rate))
+    if (! sampler.loadBuffer (index, name, recorded, rate, sound::Kind::registrato))
         return false;
 
     setMessage ("REGISTRATO " + juce::String (recorded.getNumSamples() / juce::jmax (1.0, rate), 1) + "S");
@@ -682,6 +951,20 @@ juce::StringArray Machine::softKeyLabels() const
         labels.set (1, lang::t ("REGISTRA"));
         labels.set (2, lang::t ("STOP"));
         labels.set (3, lang::t ("ASCOLTA"));
+        labels.set (4, lang::t ("RICAMPIONA"));
+        labels.set (5, lang::t ("IN LIBRERIA"));
+        labels.set (6, lang::t ("ANNULLA"));
+    }
+    else if (page == control::Command::pageSequence)
+    {
+        labels.set (0, lang::t ("REC SEQ"));
+        labels.set (1, lang::t ("SOVRAINCIDI"));
+        labels.set (2, lang::t ("CORREGGI"));
+        labels.set (3, lang::t ("CANCELLA SEQ"));
+        labels.set (4, lang::t ("NUOVA SEQ"));
+        labels.set (5, lang::t ("RADDOPPIA"));
+        labels.set (6, lang::t ("DIMEZZA"));
+        labels.set (7, lang::t ("BATTUTE"));
     }
     else if (page == control::Command::pageDisk)
     {
@@ -727,7 +1010,7 @@ int Machine::placeSlices (const std::vector<chopper::Slice>& slices)
             break;
 
         pushUndo (next, "FETTE");
-        if (sampler.loadBuffer (next, slice.name, slice.audio, slice.sampleRate))
+        if (sampler.loadBuffer (next, slice.name, slice.audio, slice.sampleRate, slice.kind))
             ++placed;
 
         ++next;
@@ -782,6 +1065,26 @@ void Machine::clearAllPads()
     changed();
 }
 
+void Machine::moveSelection (int rows, int columns)
+{
+    // si cammina sulla griglia come la si vede: riga 0 in alto
+    const auto cell = cellForPad (selected, group);
+    if (! cell)
+        return;
+
+    const int row = juce::jlimit (0, 7, cell->first + rows);
+    const int column = juce::jlimit (0, 7, cell->second + columns);
+
+    select (padForCell (row, column, group));
+    setMessage (bankName (selected.bank) + juce::String (selected.pad));
+}
+
+void Machine::applyQuantiseToSequencer()
+{
+    const double beats = quantiseBeats (quantise);
+    seq.setQuantiseTicks (juce::jmax (1, (int) std::llround (beats * Sequencer::ticksPerBeat)));
+}
+
 int Machine::placeFrom (PadRef start, const std::vector<chopper::Slice>& list)
 {
     if (list.empty())
@@ -799,7 +1102,7 @@ int Machine::placeFrom (PadRef start, const std::vector<chopper::Slice>& list)
             continue;
 
         pushUndo (at, lang::t ("RIEMPI"));
-        if (sampler.loadBuffer (at, slice.name, slice.audio, slice.sampleRate))
+        if (sampler.loadBuffer (at, slice.name, slice.audio, slice.sampleRate, slice.kind))
             ++placed;
 
         ++at;
@@ -830,7 +1133,7 @@ int Machine::fillFromSelected()
     const auto name = d.name;
     const auto sourceRate = d.sourceRate;
 
-    auto list = slicer::cut (source, sourceRate, slices, name);
+    auto list = slicer::cut (source, sourceRate, slices, name, "FETTE", d.kind);
     if (list.empty())
     {
         setMessage ("NIENTE DA SPACCARE");
@@ -848,8 +1151,9 @@ bool Machine::applyCleanedSample (int index, const juce::AudioBuffer<float>& buf
         return false;
 
     const auto name = sampler.drum (index).name;
+    const auto kind = sampler.drum (index).kind;
     pushUndo (index, what);
-    if (! sampler.loadBuffer (index, name, buffer, sourceRate))
+    if (! sampler.loadBuffer (index, name, buffer, sourceRate, kind))
         return false;
 
     setMessage ("PULITO " + what);
@@ -865,7 +1169,16 @@ juce::StringArray Machine::screenLines() const
     lines.add ("#" + lang::phrase (pageName));
     lines.add (lang::t ("PAD") + "|" + bankName (selected.bank) + juce::String (selected.pad));
     lines.add (lang::t ("SUONO") + "|" + (d.loaded() ? d.name : lang::t ("VUOTO")));
-    if (page == control::Command::pageSample)
+    if (page == control::Command::pageSequence || page == control::Command::pageSong
+            || page == control::Command::pageStep)
+    {
+        lines.add (lang::t ("SEQUENZA") + "|" + juce::String (seq.sequenceIndex() + 1));
+        lines.add (lang::t ("BATTUTE") + "|" + juce::String (seq.bars()));
+        lines.add (lang::t ("POSIZIONE") + "|" + juce::String (seq.positionBar()) + "."
+                       + juce::String (seq.positionBeat()));
+        lines.add (lang::t ("COLPI") + "|" + juce::String (seq.eventCount()));
+    }
+    else if (page == control::Command::pageSample)
     {
         lines.add (lang::t ("SOGLIA") + "|" + juce::String (rec.threshold()));
         lines.add (lang::t ("DURATA") + "|" + juce::String (rec.lengthSeconds(), 1) + "S");
@@ -880,7 +1193,7 @@ juce::StringArray Machine::screenLines() const
         lines.add (lang::t ("ACCORDA") + "|" + juce::String (d.tuneSemitones > 0 ? "+" : "")
                        + juce::String (d.tuneSemitones));
         lines.add (lang::t ("PANORAMA") + "|" + juce::String (juce::roundToInt (d.pan * 100.0f)));
-        lines.add (lang::t ("PASSO") + "|" + control::quantiseName (quantise));
+        lines.add (lang::t ("FAMIGLIA") + "|" + lang::t (sound::name (d.kind)));
     }
     lines.add (lang::t ("TEMPO") + "|" + juce::String (juce::roundToInt (bpm)));
     lines.add (lang::t ("STATO") + "|" + lang::phrase (message.isEmpty() ? juce::String ("PRONTO") : message));

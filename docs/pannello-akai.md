@@ -12,7 +12,7 @@ pannello, e se c'e' gia'.
 | SAMPLE | pagina del campione | tasto CAMPIONA sopra il display | pagina c'e', campionamento no |
 | INPUT CONFIG (shift) | sceglie l'ingresso da cui campionare | tasto AUDIO della finestra | fatto: l'ingresso si scegle nella scheda audio |
 | SEQ | pagina della sequenza | tasto SEQUENZA | pagina c'e', sequencer no |
-| STEP EDIT (shift) | correzione nota per nota | tasto PASSO | manca |
+| STEP EDIT (shift) | correzione nota per nota | pagina PASSO | manca: si cancella per pad, non ancora nota per nota |
 | PAD FX | effetti sul pad | da decidere | manca |
 | FLEX BEAT (shift) | ripetizioni ritmiche | da decidere | manca |
 | KNOB FX | effetti sui rotativi | i nostri otto rotativi | manca |
@@ -41,7 +41,7 @@ pannello, e se c'e' gia'.
 |---|---|---|---|
 | K1 K2 K3 | tre rotativi sui parametri | otto rotativi: livello, accordatura, panorama, inizio, fine, gruppo, rovescio, tempo | **fatto** |
 | MAIN VOLUME | volume generale | rotativo master | **fatto** |
-| Fader | parametro assegnabile | striscia del Push | manca |
+| Fader | parametro assegnabile | striscia del Push | fatto: volume generale |
 | TRIM SAMPLE (pad 13) | taglia inizio e fine | quarto e quinto rotativo | **fatto**, manca il disegno dell'onda |
 | HALF SPEED (pad 6) | meta' velocita' | SHIFT + ottava giu' (un'ottava sotto) | **fatto** |
 | DOUBLE SPEED (pad 7) | doppia velocita' | SHIFT + ottava su | **fatto** |
@@ -56,17 +56,17 @@ pannello, e se c'e' gia'.
 | Scritta Akai | Cosa fa | Da noi | Stato |
 |---|---|---|---|
 | SAMPLE RECORD | campiona dall'ingresso | pagina CAMPIONA, tasti ARMA e REGISTRA | fatto, per adesso dal microfono del Mac |
-| RECALL (shift) | ripesca l'ultimo campionato | pagina CAMPIONA | manca |
-| SEQ RECORD | registra la sequenza | tasto REC | manca |
-| PLAY | parte | tasto PLAY | manca il sequencer |
-| CONTINUE (shift) | riparte da dove era | SHIFT + PLAY | manca |
+| RECALL (shift) | ripesca l'ultimo campionato | tasto ANNULLA | fatto |
+| SEQ RECORD | registra la sequenza | tasto REC SEQ | fatto |
+| PLAY | parte | tasto PLAY | fatto |
+| CONTINUE (shift) | riparte da dove era | tasto PLAY (lo STOP non azzera) | fatto |
 | STOP | ferma tutto | tasto STOP | **fatto** (zittisce le voci) |
 | COUNT-IN (pad 4) | battute di avvio | pagina SEQUENZA | manca |
-| HALF SEQ (pad 2) | dimezza la sequenza | pagina SEQUENZA | manca |
-| DOUBLE SEQ (pad 3) | la raddoppia | tasto DOUBLE LOOP | manca |
-| REC QUANTIZE (pad 10) | quantizza mentre registri | pagina SEQUENZA | manca |
-| RESAMPLE (pad 11) | ricampiona quello che esce | tasto CONVERT | manca |
-| SONG (pad 12) | incatena le sequenze | tasto BRANO | manca |
+| HALF SEQ (pad 2) | dimezza la sequenza | pagina SEQUENZA, tasto DIMEZZA | fatto |
+| DOUBLE SEQ (pad 3) | la raddoppia | tasto RADDOPPIA | fatto |
+| REC QUANTIZE (pad 10) | quantizza mentre registri | tasto CORREGGI | fatto |
+| RESAMPLE (pad 11) | ricampiona quello che esce | tasto RICAMPIONA | fatto |
+| SONG (pad 12) | incatena le sequenze | pagina BRANO | manca: le sequenze si cambiano a mano, non ancora incatenate |
 | PROJECT (pad 16) | il progetto intero | pagina DISCO, SALVA SCENA e APRI SCENA | fatto |
 | MIDI CONFIG (pad 8) | ingressi e uscite MIDI | pagina DISCO | manca |
 
@@ -179,3 +179,32 @@ nella finestra, e la scelta si ricorda. Le parole italiane sono le chiavi: se
 una traduzione manca, resta quella italiana invece di lasciare la casella
 vuota. Il francese e' in maiuscolo senza accenti, come la serigrafia di una
 macchina vera.
+
+## Il sequencer
+
+Conta come la macchina vera: 96 passi per quarto, 99 sequenze, e la sequenza
+gira su se stessa. Pagina SEQUENZA sul display: numero della sequenza, battute,
+posizione (battuta.quarto) e quanti colpi ci sono dentro.
+
+| Tasto | Cosa fa |
+|---|---|
+| PLAY | parte, o riprende da dove era |
+| STOP | ferma; premuto di nuovo torna all'inizio |
+| REC SEQ | registra: i colpi sui pad finiscono nella sequenza |
+| SOVRAINCIDI | aggiunge senza cancellare quello che c'e' |
+| CORREGGI | incolla i colpi al passo scelto nella colonna di destra |
+| CANCELLA + pad (mentre gira) | toglie dalla sequenza i colpi di quel pad |
+| NUOVA SEQ | va sulla prima sequenza vuota |
+| COPIA | copia la sequenza di adesso in una vuota |
+| BATTUTE | 1, 2, 4, 8 |
+| RADDOPPIA / DIMEZZA | raddoppia copiando i colpi, o taglia la seconda meta' |
+| SUONA | i pad suonano senza finire nella sequenza |
+| Rotativo SWING | da 50 a 75: sposta in avanti i sedicesimi dispari |
+
+Chi scrive e chi legge stanno su fili diversi: i colpi arrivano dal Push, la
+riproduzione gira nel filo dell'audio. Per questo i colpi si aggiungono solo in
+fondo alla lista e il numero di eventi diventa vero per ultimo, cosi' il filo
+dell'audio legge fino a quel numero e quello che c'e' oltre non lo guarda
+nemmeno. Le modifiche che spostano o togliono roba (cancella, raddoppia,
+dimezza) alzano una bandiera e il filo dell'audio salta quel blocco: un buco di
+pochi millesimi che non si sente.

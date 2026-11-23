@@ -11,6 +11,8 @@ MainComponent::MainComponent()
     status.setJustificationType (juce::Justification::centredLeft);
     addAndMakeVisible (status);
 
+    mpc.onSetup = [this] { audioButton.triggerClick(); };
+
     audioButton.onClick = [this]
     {
         auto selector = std::make_unique<juce::AudioDeviceSelectorComponent> (
@@ -107,6 +109,7 @@ MainComponent::MainComponent()
     push->onCommand = [this] (const control::Control& c, bool down) { mpc.command (c, down); };
     push->onEncoder = [this] (const control::Control& c, int steps) { mpc.encoder (c, steps); };
     push->onBankGroupChanged = [this] (int g) { mpc.setBankGroup (g); };
+    push->onTouchStrip = [this] (float position) { mpc.setMasterGain (position); };
 
     loadLanguage();
     startOsc();
@@ -290,7 +293,7 @@ void MainComponent::refreshLights()
             const auto light = mpc.lightFor (p);
 
             if (push != nullptr)
-                push->setPadLight (p, light);
+                push->setPadLight (p, light, mpc.kindFor (p));
 
             if (osc != nullptr)
             {
@@ -312,7 +315,8 @@ void MainComponent::refreshLights()
     {
         const bool lit = mpc.buttonLit (b);
         const int value = b.rgb ? Push2Panel::paletteIndexFor (lit ? machine::PadLight::selected
-                                                                   : machine::PadLight::loaded)
+                                                                   : machine::PadLight::loaded,
+                                                               sound::Kind::giro)
                                 : (lit ? 127 : 24);
         if (push != nullptr)
             push->setButtonLight (b.number, value);
@@ -687,14 +691,20 @@ void MainComponent::paint (juce::Graphics& g)
             const auto& d = mpc.engine().drum (machine::drumIndex (p));
             const auto light = mpc.lightFor (p);
 
+            // il colore e' quello della famiglia del suono, come sui pad del
+            // Push: grigio la batteria, celeste le voci, blu i giri, verde
+            // scuro gli accordi
+            const auto kind = mpc.kindFor (p);
+
             juce::Colour edge (0xff34363a);
             float thickness = 1.0f;
 
             switch (light)
             {
-                case machine::PadLight::selected: edge = juce::Colour (0xffffb020); thickness = 1.6f; break;
+                case machine::PadLight::selected: edge = sound::colourSelected (kind); thickness = 1.8f; break;
+                case machine::PadLight::playing:  edge = sound::colourPlaying (kind); thickness = 1.6f; break;
                 case machine::PadLight::muted:    edge = juce::Colour (0xffff3b30); break;
-                case machine::PadLight::loaded:   edge = juce::Colour (0xff3d8bff); break;
+                case machine::PadLight::loaded:   edge = sound::colour (kind); break;
                 default: break;
             }
 

@@ -92,8 +92,15 @@ public:
 
             std::vector<chopper::Slice> list;
             for (int i = 0; i < 4; ++i)
-                list.push_back ({ "FETTA" + juce::String (i + 1), "FETTE",
-                                  juce::AudioBuffer<float> (1, 1000), rate });
+            {
+                chopper::Slice s;
+                s.name = "FETTA" + juce::String (i + 1);
+                s.bank = "FETTE";
+                s.kind = sound::Kind::giro;
+                s.audio.setSize (1, 1000);
+                s.sampleRate = rate;
+                list.push_back (std::move (s));
+            }
 
             // pad 5 del banco B
             const machine::PadRef start { 1, 5 };
@@ -133,8 +140,14 @@ public:
 
             std::vector<chopper::Slice> list;
             for (int i = 0; i < 8; ++i)
-                list.push_back ({ "F" + juce::String (i), "FETTE",
-                                  juce::AudioBuffer<float> (1, 500), rate });
+            {
+                chopper::Slice s;
+                s.name = "F" + juce::String (i);
+                s.bank = "FETTE";
+                s.audio.setSize (1, 500);
+                s.sampleRate = rate;
+                list.push_back (std::move (s));
+            }
 
             // ultimo banco, ultimi pad
             const machine::PadRef start { machine::numBanks - 1, machine::padsPerBank - 2 };

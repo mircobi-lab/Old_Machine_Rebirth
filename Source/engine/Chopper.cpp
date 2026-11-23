@@ -17,6 +17,16 @@ juce::String bankName (const std::string& id)
     return juce::String (id).toUpperCase();
 }
 
+sound::Kind kindFor (const std::string& id)
+{
+    if (id == "drums")  return sound::Kind::batteria;
+    if (id == "vox")    return sound::Kind::voce;
+    if (id == "loops")  return sound::Kind::giro;
+    if (id == "chords") return sound::Kind::accordi;
+    if (id == "bass")   return sound::Kind::basso;
+    return sound::Kind::generico;
+}
+
 juce::AudioBuffer<float> toBuffer (const sf::Stereo& s)
 {
     const int length = (int) s.size();
@@ -85,6 +95,7 @@ Result chop (const juce::File& file, int secondsToUse,
 
                 Slice slice;
                 slice.bank = bankName (bank.id);
+                slice.kind = kindFor (bank.id);
                 slice.name = juce::String (pad->label).toUpperCase();
                 if (slice.name.isEmpty())
                     slice.name = slice.bank;

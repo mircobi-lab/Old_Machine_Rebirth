@@ -142,5 +142,6 @@ void SampleEngine::loadStarterKit()
         d.tuneSemitones = 0;
         d.pan = 0.0f;
         d.reverse = false;
+        d.kind = sound::guessFromName (d.name);
     }
 }

@@ -25,7 +25,7 @@ public:
     bool isConnected() const { return input != nullptr && output != nullptr; }
     juce::String portDescription() const { return portName; }
 
-    void setPadLight (machine::PadRef, machine::PadLight);
+    void setPadLight (machine::PadRef, machine::PadLight, sound::Kind);
     void setBankGroup (int group);                  // 0 = A..D, 1 = E..H
     int getBankGroup() const { return bankGroup; }
     void setScreenLines (juce::StringArray);        // cosa scrivere sul display
@@ -36,13 +36,16 @@ public:
     std::function<void (int group)> onBankGroupChanged;
     std::function<void (const control::Control&, bool down)> onCommand;
     std::function<void (const control::Control&, int delta)> onEncoder;
+    std::function<void (float position)> onTouchStrip;   // la striscia: 0 in basso, 1 in cima
 
     // Luce di un tasto: per i bianchi 0..127, per gli RGB l'indice della tavolozza
     void setButtonLight (int cc, int value);
 
     static std::optional<juce::MidiDeviceInfo> choosePort (const juce::Array<juce::MidiDeviceInfo>&,
                                                            bool preferUserPort);
-    static int paletteIndexFor (machine::PadLight);
+    // L'indice nella tavolozza: lo stato del pad piu' la famiglia del suono.
+    static int paletteIndexFor (machine::PadLight, sound::Kind);
+    static int numberOfPaletteEntries();
 
 private:
     void handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMessage&) override;
@@ -65,7 +68,9 @@ private:
     juce::String portName;
     int bankGroup = 0;
     std::array<machine::PadLight, machine::numDrums> lights {};
+    std::array<sound::Kind, machine::numDrums> kinds {};     // la famiglia di ogni suono
     std::array<machine::PadLight, 64> onScreen {};           // cosa c'e' davvero sui LED
+    std::array<int, 64> onScreenEntry {};                    // e con quale colore
     bool fullRefresh = true;
     juce::StringArray screenLines;
     juce::Image screenImage;

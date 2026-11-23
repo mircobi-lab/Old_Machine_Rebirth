@@ -14,7 +14,19 @@ accesa forte, le altre smorte.
 ## Sotto il display, gli otto tasti funzione (cc 20-27)
 
 Cambiano nome con la pagina, come i quattro tasti sotto lo schermo dell'MPC60.
-Qui sono il doppio.
+Qui sono il doppio. Quelli che in una pagina non servono restano spenti.
+
+| Pagina | F1 | F2 | F3 | F4 | F5 | F6 | F7 |
+|---|---|---|---|---|---|---|---|
+| CAMPIONA | ARMA | REGISTRA | STOP | ASCOLTA | RICAMPIONA | IN LIBRERIA | ANNULLA |
+| FETTE | SPACCA | PULISCI AI | PULISCI MP3 | ANNULLA | RIEMPI | FETTE + | FETTE - |
+| SEQUENZA | REC SEQ | SOVRAINCIDI | CORREGGI | CANCELLA SEQ | NUOVA SEQ | RADDOPPIA | DIMEZZA |
+| DISCO | SALVA SCENA | APRI SCENA | IN LIBRERIA | LIBRERIA | | | |
+
+## La striscia sotto il display
+
+Manda il pitch bend e muove il volume generale: giu' tutto in basso, su tutto
+in cima.
 
 ## I rotativi
 
@@ -90,3 +102,41 @@ E' il fader dell'MPC, assegnabile a un parametro, come sull'MPC Sample.
 
 Quattro banchi per volta a quadranti, il pad 1 in basso a sinistra di ogni
 quadrante; Layout passa al gruppo E-H. Vedi il README.
+
+## I colori dei pad
+
+Il colore dice di che famiglia e' il suono, cosi' guardando la griglia si capisce
+dove sta la batteria e dove stanno le voci senza leggere il display. Sono le
+tinte dello stile MBStudio: grigi, blu, celeste e verde scuro.
+
+| Famiglia | Colore |
+|---|---|
+| Batteria | grigio |
+| Percussioni | grigio bluastro |
+| Voce | celeste |
+| Giri e fette | blu |
+| Accordi | verde scuro |
+| Basso | blu notte |
+| Registrato | grigio chiaro |
+| Senza famiglia | grigio scuro |
+
+Ogni famiglia ha tre intensita': il pad fermo e' smorto, quello scelto e' pieno,
+quello che suona tira al bianco. Il pad vuoto e' quasi spento e quello mutato e'
+rosso, e quei due non dipendono dalla famiglia. In tutto sono 26 voci della
+tavolozza del Push, scritte all'accensione dopo essersi segnati quelle
+originali, che vengono rimesse quando si chiude.
+
+La famiglia la indovina il programma dal nome del campione (CASSA, VOX, BASS,
+PIANO, LOOP...), oppure arriva dall'analisi di SPACCA, che sa benissimo cos'e'
+batteria e cos'e' voce. Se sbaglia, l'ottavo rotativo nella pagina SUONO la
+cambia a mano.
+
+## Quanti tasti lavorano
+
+Un collaudo preme tutti i tasti uno per uno, in tutte le pagine, con la macchina
+appena accesa e con la macchina in mezzo al lavoro, e controlla che qualcosa
+cambi davvero: non basta che compaia il nome sul display. Al momento ne
+rispondono 58 piu' il TAP, che ha un collaudo suo perche' ha bisogno del tempo
+vero. Quattro passano la palla alla finestra (SETUP, SFOGLIA, A LIVE, SCEGLI),
+SHIFT per mestiere cambia gli altri, e resta spento solo AGG EFFETTO, che
+aspetta gli effetti.

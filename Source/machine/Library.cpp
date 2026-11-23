@@ -132,6 +132,7 @@ bool saveScene (const juce::File& folder, const machine::Machine& m, juce::Strin
         parts.add (juce::String (d.reverse ? 1 : 0));
         parts.add (juce::String (d.muteGroup));
         parts.add (juce::String (state.mutes[(size_t) i] ? 1 : 0));
+        parts.add (juce::String (sound::indexOf (d.kind)));
         parts.add (file.getFileName());
         lines.add (parts.joinIntoString (" "));
     }
@@ -184,9 +185,18 @@ bool loadScene (const juce::File& folder, machine::Machine& m, juce::String& err
             item.drum.muteGroup = parts[8].getIntValue();
             item.muted = parts[9].getIntValue() != 0;
 
+            // la famiglia e' arrivata dopo: le scene salvate prima non ce
+            // l'hanno, e per quelle si indovina dal nome
+            int firstNamePart = 10;
+            if (parts.size() >= 12 && parts[10].containsOnly ("0123456789"))
+            {
+                item.drum.kind = sound::kindFromIndex (parts[10].getIntValue());
+                firstNamePart = 11;
+            }
+
             // il nome del file e' tutto quello che resta, spazi compresi
             juce::StringArray rest;
-            for (int i = 10; i < parts.size(); ++i)
+            for (int i = firstNamePart; i < parts.size(); ++i)
                 rest.add (parts[i]);
 
             item.file = folder.getChildFile (rest.joinIntoString (" "));
@@ -214,6 +224,9 @@ bool loadScene (const juce::File& folder, machine::Machine& m, juce::String& err
         d.name = name.fromFirstOccurrenceOf (" ", false, false).toUpperCase();
         if (d.name.isEmpty())
             d.name = name;
+
+        if (d.kind == sound::Kind::generico)
+            d.kind = sound::guessFromName (d.name);
 
         state.mutes[(size_t) item.index] = item.muted;
     }

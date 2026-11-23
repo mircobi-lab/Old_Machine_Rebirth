@@ -51,7 +51,7 @@ int snapToZero (const juce::AudioBuffer<float>& buffer, int at, int window)
 
 std::vector<chopper::Slice> cut (const juce::AudioBuffer<float>& source, double sampleRate,
                                  int pieces, const juce::String& baseName,
-                                 const juce::String& bank)
+                                 const juce::String& bank, sound::Kind kind)
 {
     std::vector<chopper::Slice> slices;
 
@@ -87,6 +87,7 @@ std::vector<chopper::Slice> cut (const juce::AudioBuffer<float>& source, double 
 
         chopper::Slice slice;
         slice.bank = bank;
+        slice.kind = kind;
         slice.name = baseName + " " + juce::String (i + 1);
         slice.sampleRate = rate;
         slice.audio.setSize (channels, size);

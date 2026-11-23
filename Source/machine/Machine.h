@@ -4,6 +4,7 @@
 #include "engine/Chopper.h"
 #include "engine/Cleaner.h"
 #include "engine/Recorder.h"
+#include "engine/Sequencer.h"
 #include "engine/Slicer.h"
 #include "engine/SampleEngine.h"
 #include "machine/PadGrid.h"
@@ -38,6 +39,7 @@ public:
 
     // --- quello che le superfici fanno vedere
     PadLight lightFor (PadRef) const;
+    sound::Kind kindFor (PadRef) const;
     bool buttonLit (const control::Control&) const;
     juce::StringArray screenLines() const;
     // Le etichette degli otto tasti sotto il display, che cambiano con la
@@ -51,6 +53,8 @@ public:
     PadRef selectedPad() const { return selected; }
     SampleEngine& engine() { return sampler; }
     Recorder& recorder() { return rec; }
+    Sequencer& sequencer() { return seq; }
+    const Sequencer& sequencer() const { return seq; }
     const Recorder& recorder() const { return rec; }
 
     // Da chiamare ogni tanto dal filo dei messaggi: se il registratore ha
@@ -106,12 +110,19 @@ public:
     // in giro i suoni di quella di prima.
     void clearAllPads();
 
+    // Il volume generale, come lo manda la striscia del Push.
+    void setMasterGain (float);
+    float masterVolume() const { return masterGain; }
+
+    bool padsRecord() const { return padsIntoSequence; }
+
     void setMessageFromOutside (const juce::String& text) { setMessage (text); changed(); }
 
     std::function<void()> onChanged;          // qualcosa e' cambiato: ridisegna
     std::function<void()> onChopRequested;    // spacca un brano in fette
     std::function<void()> onFillRequested;    // chiedi un file lungo da tagliare a fette uguali
     std::function<void()> onSaveScene, onOpenScene, onToLibrary, onBrowseLibrary;
+    std::function<void()> onSetup;             // apri la scheda audio
     std::function<void (cleaner::Preset)> onCleanRequested;  // pulisci il campione del pad
 
 private:
@@ -124,13 +135,19 @@ private:
     void undo();
     void redo();
     void tapTempo();
+    void moveSelection (int rows, int columns);
+    void applyQuantiseToSequencer();
     void setMessage (juce::String);
     void changed();
 
     SampleEngine sampler;
     Recorder rec;
+    Sequencer seq;
     int recordings = 0;
     int slices = 16;                    // in quante fette taglia RIEMPI
+    bool soloMode = false;
+    bool resampling = false;            // il registratore prende l'uscita, non l'ingresso
+    bool padsIntoSequence = true;       // SUONA: i pad finiscono nella sequenza o no
 
     PadRef selected { 0, 1 };
     int group = 0;                      // 0 = A..D, 1 = E..H

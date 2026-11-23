@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/Drum.h"
+#include "engine/SoundKind.h"
 
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <functional>
@@ -20,6 +21,7 @@ struct Slice
 {
     juce::String name;      // come si chiamera' sul pad
     juce::String bank;      // "BATTERIA", "VOCE", "GIRI", "ACCORDI", "BASSO"
+    sound::Kind kind = sound::Kind::generico;
     juce::AudioBuffer<float> audio;
     double sampleRate = 44100.0;
 };

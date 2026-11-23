@@ -101,12 +101,23 @@ public:
             m.prepare (rate);
 
             std::vector<chopper::Slice> slices;
+            const auto makeSlice = [rate] (juce::String name, juce::String bank, sound::Kind kind)
+            {
+                chopper::Slice s;
+                s.name = std::move (name);
+                s.bank = std::move (bank);
+                s.kind = kind;
+                s.audio.setSize (1, 100);
+                s.sampleRate = rate;
+                return s;
+            };
+
             for (int i = 0; i < 3; ++i)
-                slices.push_back ({ "CASSA" + juce::String (i), "BATTERIA",
-                                    juce::AudioBuffer<float> (1, 100), rate });
+                slices.push_back (makeSlice ("CASSA" + juce::String (i), "BATTERIA",
+                                             sound::Kind::batteria));
             for (int i = 0; i < 2; ++i)
-                slices.push_back ({ "VOCE" + juce::String (i), "VOCE",
-                                    juce::AudioBuffer<float> (1, 100), rate });
+                slices.push_back (makeSlice ("VOCE" + juce::String (i), "VOCE",
+                                             sound::Kind::voce));
 
             const int placed = m.placeSlices (slices);
             expectEquals (placed, 5);
