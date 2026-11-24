@@ -33,6 +33,7 @@ struct Drum
     bool reverse = false;
     int muteGroup = 0;           // 0 = nessuno; i suoni dello stesso gruppo si tagliano
     PlayMode playMode = PlayMode::unaVolta;
+    float filter = 0.0f;         // -1 taglia i bassi, 0 niente, +1 taglia gli alti
 
     bool loaded() const { return sample.getNumSamples() > 0; }
 

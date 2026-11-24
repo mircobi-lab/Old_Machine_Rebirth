@@ -40,6 +40,14 @@ public:
           << seq.sequenceIndex() << "|" << seq.bars() << "|" << seq.eventCount() << "|"
           << (int) seq.timingCorrect() << "|" << seq.quantiseTicks() << "|" << seq.swing() << "|"
           << juce::String (seq.positionInBeats(), 3) << "|"
+          << juce::String (seq.speed(), 2) << "|" << seq.countInBars() << "|"
+          << seq.songLength() << (int) seq.songMode() << "|"
+          << (int) m.compressorOn() << "|"
+          << juce::String (m.compressor().thresholdDb(), 1) << "|"
+          << juce::String (m.compressor().ratio(), 1) << "|"
+          << juce::String (m.compressor().attackMs(), 1) << "|"
+          << juce::String (m.compressor().releaseMs(), 1) << "|"
+          << m.engine().activeVoices() << "|"
           << juce::String (m.tempo(), 2) << "|" << juce::String (m.masterVolume(), 3) << "|"
           << (int) m.padsRecord() << "|"
           << rec.threshold() << "|" << (int) rec.state() << "|"
@@ -49,6 +57,7 @@ public:
           << d.name << "|" << juce::String (d.level, 3) << "|" << d.tuneSemitones << "|"
           << juce::String (d.pan, 3) << "|" << d.start << "|" << d.end << "|"
           << d.muteGroup << "|" << (int) d.reverse << "|" << sound::indexOf (d.kind) << "|"
+          << juce::String (d.filter, 2) << "|"
           << (int) d.playMode << "|"
           << m.engine().loadedCount() << "|";
 

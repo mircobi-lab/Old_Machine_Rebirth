@@ -1,4 +1,6 @@
 #include "Machine.h"
+#include "engine/Warp.h"
+#include "push2/Push2Protocol.h"
 #include "ui/Lang.h"
 
 namespace machine
@@ -26,6 +28,7 @@ void Machine::prepare (double sampleRate)
 {
     rec.prepare (sampleRate, 2);
     seq.prepare (sampleRate);
+    comp.prepare (sampleRate);
     applyQuantiseToSequencer();
     rate = sampleRate > 0.0 ? sampleRate : 44100.0;
     sampler.prepare (rate);
@@ -55,7 +58,8 @@ void Machine::process (juce::AudioBuffer<float>& buffer)
 
     // Note repeat e metronomo battono il tempo dentro il filo dell'audio, cosi'
     // non dipendono da quanto e' puntuale il filo dei messaggi.
-    if (repeatRunning.load() || metronomeOn.load())
+    const bool countingIn = seq.isCountingIn();
+    if (repeatRunning.load() || metronomeOn.load() || countingIn)
     {
         for (int i = 0; i < numSamples; ++i)
         {
@@ -72,7 +76,9 @@ void Machine::process (juce::AudioBuffer<float>& buffer)
                     sampler.trigger (d, (float) repeatVelocity.load() / 127.0f);
             }
 
-            if (metronomeOn.load())
+            // durante l'avvio contato il metronomo batte comunque: e' tutto
+            // quello che si sente in quelle battute
+            if (metronomeOn.load() || countingIn)
                 clickRemaining = (int) (0.02 * rate);
         }
     }
@@ -99,6 +105,10 @@ void Machine::process (juce::AudioBuffer<float>& buffer)
             --clickRemaining;
         }
     }
+
+    // il compressore sta sull'uscita generale, prima del volume
+    if (compressing)
+        comp.process (buffer);
 
     buffer.applyGain (masterGain);
 
@@ -184,9 +194,6 @@ void Machine::hit (PadRef p, int velocity)
 
     // nella sequenza finisce il colpo vero, non le pressioni per mutare,
     // cancellare o copiare
-    if (padsIntoSequence)
-        seq.recordHit (index, velocity);
-
     int playIndex = index;
     float gain = fullLevel ? 1.0f : juce::jlimit (0.0f, 1.0f, (float) velocity / 127.0f);
 
@@ -259,6 +266,10 @@ void Machine::padUp (PadRef p)
 
     // il pad mollato conta solo per i suoni tenuti: il campionatore sa quali
     sampler.release (index);
+
+    if (onPadPlayed)
+        if (const auto cell = cellForPad (p, group))
+            onPadPlayed (push2::padNote (cell->first, cell->second), 0);
 
     if (repeatRunning.load() && repeatDrum.load() == index)
     {
@@ -442,8 +453,10 @@ void Machine::command (const control::Control& c, bool down)
                             setMessage ("NUOVA SEQ " + juce::String (seq.sequenceIndex() + 1)); break;
                     case 5: seq.doubleLength(); setMessage ("BATTUTE " + juce::String (seq.bars())); break;
                     case 6: seq.halveLength(); setMessage ("BATTUTE " + juce::String (seq.bars())); break;
-                    case 7: seq.setBars (seq.bars() >= 8 ? 1 : seq.bars() * 2);
-                            setMessage ("BATTUTE " + juce::String (seq.bars())); break;
+                    case 7: // meta', normale, doppia: HALF SPEED e DOUBLE SPEED
+                            seq.setSpeed (seq.speed() >= 2.0 ? 0.5
+                                                             : (seq.speed() < 1.0 ? 1.0 : 2.0));
+                            setMessage ("VELOCITA " + juce::String (seq.speed(), 2)); break;
                     default: break;
                 }
             }
@@ -465,6 +478,8 @@ void Machine::command (const control::Control& c, bool down)
                     d.reverse = ! d.reverse;
                     setMessage (d.reverse ? "ROVESCIO" : "DRITTO");
                 }
+                else if (c.index == 4)
+                    warpSelected();
                 else
                     setMessage ("");
             }
@@ -491,6 +506,52 @@ void Machine::command (const control::Control& c, bool down)
                 {
                     seq.setTimingCorrect (! seq.timingCorrect());
                     setMessage (seq.timingCorrect() ? "CORREGGI ACCESO" : "CORREGGI SPENTO");
+                }
+                else
+                    setMessage ("");
+            }
+            else if (page == C::pageMix)
+            {
+                if (c.index == 0)
+                {
+                    compressing = ! compressing;
+                    setMessage (compressing ? "COMPRESSORE ACCESO" : "COMPRESSORE SPENTO");
+                }
+                else if (c.index == 1)
+                {
+                    mutes.fill (false);
+                    soloMode = false;
+                    setMessage ("TUTTI SUONANO");
+                }
+                else
+                    setMessage ("");
+            }
+            else if (page == C::pageSong)
+            {
+                if (c.index == 0)
+                {
+                    seq.addToSong (seq.sequenceIndex());
+                    setMessage ("BRANO " + juce::String (seq.songLength()));
+                }
+                else if (c.index == 1)
+                {
+                    seq.removeLastSongStep();
+                    setMessage ("BRANO " + juce::String (seq.songLength()));
+                }
+                else if (c.index == 2)
+                {
+                    seq.setSongMode (! seq.songMode());
+                    setMessage (seq.songMode() ? "BRANO ACCESO" : "BRANO SPENTO");
+                }
+                else if (c.index == 3)
+                {
+                    seq.clearSong();
+                    setMessage ("BRANO 0");
+                }
+                else if (c.index == 4)
+                {
+                    seq.setCountInBars (seq.countInBars() >= 2 ? 0 : seq.countInBars() + 1);
+                    setMessage ("AVVIO CONTATO " + juce::String (seq.countInBars()));
                 }
                 else
                     setMessage ("");
@@ -583,6 +644,14 @@ void Machine::command (const control::Control& c, bool down)
             if (shift)
             {
                 mutes.fill (false);
+                soloMode = false;
+                setMessage ("TUTTI SUONANO");
+                break;
+            }
+
+            if (shift)
+            {
+                mutes.fill (false);
                 setMessage ("TUTTI SUONANO");
             }
             else
@@ -619,6 +688,13 @@ void Machine::command (const control::Control& c, bool down)
             break;
 
         case C::metronome:
+            if (shift)
+            {
+                compressing = ! compressing;
+                setMessage (compressing ? "COMPRESSORE ACCESO" : "COMPRESSORE SPENTO");
+                break;
+            }
+
             metronome = ! metronome;
             metronomeOn.store (metronome);
             setMessage (metronome ? "METRONOMO ACCESO" : "METRONOMO SPENTO");
@@ -863,6 +939,52 @@ void Machine::command (const control::Control& c, bool down)
 
 void Machine::changeParameter (int which, int steps)
 {
+    // nella pagina MIX i rotativi sono il compressore, il filtro del pad e il
+    // volume generale: e' la pagina dove si guarda come suona l'insieme
+    if (page == control::Command::pageMix)
+    {
+        auto& d = sampler.drum (drumIndex (selected));
+
+        switch (which)
+        {
+            case 0:
+                comp.setThresholdDb (comp.thresholdDb() + steps);
+                setMessage ("SOGLIA " + juce::String (juce::roundToInt (comp.thresholdDb())));
+                break;
+            case 1:
+                comp.setRatio (comp.ratio() + steps * 0.5);
+                setMessage ("RAPPORTO " + juce::String (comp.ratio(), 1));
+                break;
+            case 2:
+                comp.setAttackMs (comp.attackMs() + steps);
+                setMessage ("ATTACCO " + juce::String (juce::roundToInt (comp.attackMs())));
+                break;
+            case 3:
+                comp.setReleaseMs (comp.releaseMs() + steps * 10);
+                setMessage ("RILASCIO " + juce::String (juce::roundToInt (comp.releaseMs())));
+                break;
+            case 4:
+                d.filter = juce::jlimit (-1.0f, 1.0f, d.filter + steps * 0.05f);
+                setMessage ("FILTRO " + juce::String (juce::roundToInt (d.filter * 100.0f)));
+                break;
+            case 5:
+                d.level = juce::jlimit (0.0f, 1.0f, d.level + steps * 0.02f);
+                setMessage ("LIVELLO " + juce::String (juce::roundToInt (d.level * 100.0f)));
+                break;
+            case 6:
+                d.pan = juce::jlimit (-1.0f, 1.0f, d.pan + steps * 0.05f);
+                setMessage ("PANORAMA " + juce::String (juce::roundToInt (d.pan * 100.0f)));
+                break;
+            default:
+                masterGain = juce::jlimit (0.0f, 1.0f, masterGain + steps * 0.02f);
+                setMessage ("GENERALE " + juce::String (juce::roundToInt (masterGain * 100.0f)));
+                break;
+        }
+
+        changed();
+        return;
+    }
+
     // nella pagina FETTE il primo rotativo e' il numero delle fette: si gira e
     // si vedono i tagli muoversi sull'onda, prima di premere RIEMPI
     if (page == control::Command::pageChop && which == 0)
@@ -1047,6 +1169,49 @@ void Machine::setMasterGain (float gain)
 {
     masterGain = juce::jlimit (0.0f, 1.0f, gain);
     setMessage ("VOLUME " + juce::String (juce::roundToInt (masterGain * 100.0f)));
+    changed();
+}
+
+void Machine::warpSelected()
+{
+    const int index = drumIndex (selected);
+    const auto& drum = sampler.drum (index);
+
+    if (! drum.loaded())
+    {
+        setMessage ("PAD VUOTO");
+        changed();
+        return;
+    }
+
+    const auto source = sampler.copyOf (index);
+    const auto name = drum.name;
+    const auto kind = drum.kind;
+    const double sourceRate = drum.sourceRate;
+
+    int bars = 1;
+    const double factor = warp::factorForTempo (source.getNumSamples(), sourceRate, bpm, bars);
+
+    if (std::abs (factor - 1.0) < 0.01)
+    {
+        setMessage ("GIA' A TEMPO");
+        changed();
+        return;
+    }
+
+    auto stretched = warp::stretch (source, factor);
+    if (stretched.getNumSamples() <= 0)
+    {
+        setMessage ("NON CI RIESCO");
+        changed();
+        return;
+    }
+
+    pushUndo (index, lang::t ("WARP"));
+    sampler.loadBuffer (index, name, stretched, sourceRate, kind);
+
+    setMessage ("WARP " + juce::String (bars) + " "
+                    + lang::t (bars == 1 ? "BATTUTA" : "BATTUTE"));
     changed();
 }
 
@@ -1244,7 +1409,7 @@ juce::StringArray Machine::softKeyLabels() const
         labels.set (4, lang::t ("NUOVA SEQ"));
         labels.set (5, lang::t ("RADDOPPIA"));
         labels.set (6, lang::t ("DIMEZZA"));
-        labels.set (7, lang::t ("BATTUTE"));
+        labels.set (7, lang::t ("VELOCITA"));
     }
     else if (page == control::Command::pageSound)
     {
@@ -1252,6 +1417,7 @@ juce::StringArray Machine::softKeyLabels() const
         labels.set (1, lang::t ("IN LIBRERIA"));
         labels.set (2, lang::t ("ANNULLA"));
         labels.set (3, lang::t ("ROVESCIO"));
+        labels.set (4, lang::t ("WARP"));
     }
     else if (page == control::Command::pageStep)
     {
@@ -1259,6 +1425,19 @@ juce::StringArray Machine::softKeyLabels() const
         labels.set (1, lang::t ("PASSI -"));
         labels.set (2, lang::t ("PASSI +"));
         labels.set (3, lang::t ("CORREGGI"));
+    }
+    else if (page == control::Command::pageMix)
+    {
+        labels.set (0, lang::t ("COMPRESSORE"));
+        labels.set (1, lang::t ("TUTTI SUONANO"));
+    }
+    else if (page == control::Command::pageSong)
+    {
+        labels.set (0, lang::t ("AGGIUNGI"));
+        labels.set (1, lang::t ("TOGLI"));
+        labels.set (2, lang::t ("BRANO"));
+        labels.set (3, lang::t ("CANCELLA SEQ"));
+        labels.set (4, lang::t ("AVVIO CONTATO"));
     }
     else if (page == control::Command::pageDisk)
     {
@@ -1473,7 +1652,29 @@ juce::StringArray Machine::screenLines() const
                        + juce::String (seq.positionBeat()));
         lines.add (lang::t ("COLPI") + "|" + juce::String (seq.eventCount()));
     }
-    else if (page == control::Command::pageSequence || page == control::Command::pageSong)
+    else if (page == control::Command::pageMix)
+    {
+        lines.add (lang::t ("SOGLIA") + "|" + juce::String (juce::roundToInt (comp.thresholdDb())));
+        lines.add (lang::t ("RAPPORTO") + "|" + juce::String (comp.ratio(), 1));
+        lines.add (lang::t ("ATTACCO") + "|" + juce::String (juce::roundToInt (comp.attackMs())));
+        lines.add (lang::t ("RILASCIO") + "|" + juce::String (juce::roundToInt (comp.releaseMs())));
+        lines.add (lang::t ("FILTRO") + "|"
+                       + juce::String (juce::roundToInt (d.filter * 100.0f)));
+        lines.add (lang::t ("LIVELLO") + "|" + juce::String (juce::roundToInt (d.level * 100.0f)));
+        lines.add (lang::t ("PANORAMA") + "|" + juce::String (juce::roundToInt (d.pan * 100.0f)));
+        lines.add (lang::t ("GENERALE") + "|" + juce::String (juce::roundToInt (masterGain * 100.0f)));
+        return lines;
+    }
+    else if (page == control::Command::pageSong)
+    {
+        lines.add (lang::t ("BRANO") + "|" + juce::String (seq.songPosition() + 1) + "/"
+                       + juce::String (seq.songLength()));
+        lines.add (lang::t ("SEQUENZA") + "|" + juce::String (seq.sequenceIndex() + 1));
+        lines.add (lang::t ("AVVIO CONTATO") + "|" + juce::String (seq.countInBars()));
+        lines.add (lang::t ("POSIZIONE") + "|" + juce::String (seq.positionBar()) + "."
+                       + juce::String (seq.positionBeat()));
+    }
+    else if (page == control::Command::pageSequence)
     {
         lines.add (lang::t ("SEQUENZA") + "|" + juce::String (seq.sequenceIndex() + 1));
         lines.add (lang::t ("BATTUTE") + "|" + juce::String (seq.bars()));

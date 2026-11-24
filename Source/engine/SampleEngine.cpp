@@ -110,6 +110,7 @@ void SampleEngine::startVoice (int drumIndex, float velocity)
     chosen->active = true;
     chosen->looping = d.playMode == PlayMode::giro;
     chosen->fadeOut = 0;
+    chosen->lowState = 0.0f;
 }
 
 void SampleEngine::releaseVoices (int drumIndex)
@@ -205,6 +206,22 @@ void SampleEngine::process (juce::AudioBuffer<float>& buffer)
         const float leftGain  = v.gain * std::sqrt (0.5f * (1.0f - d.pan));
         const float rightGain = v.gain * std::sqrt (0.5f * (1.0f + d.pan));
 
+        // Il filtro del pad: una manopola sola. Girata a sinistra toglie gli
+        // acuti, a destra toglie i bassi. E' un polo solo, dolce come quello
+        // delle macchine vecchie, e costa due conti per campione.
+        const float knob = juce::jlimit (-1.0f, 1.0f, d.filter);
+        const bool filtering = std::abs (knob) > 0.01f;
+        float coeff = 1.0f;
+
+        if (filtering)
+        {
+            const double cutoff = knob > 0.0f
+                                      ? 18000.0 * std::pow (180.0 / 18000.0, (double) knob)
+                                      : 20.0 * std::pow (2000.0 / 20.0, (double) -knob);
+            const double x = juce::MathConstants<double>::twoPi * cutoff / rate;
+            coeff = (float) juce::jlimit (0.0005, 0.999, x / (x + 1.0));
+        }
+
         for (int i = 0; i < numSamples; ++i)
         {
             int index = (int) v.position;
@@ -247,7 +264,20 @@ void SampleEngine::process (juce::AudioBuffer<float>& buffer)
             for (int ch = 0; ch < numChannels; ++ch)
             {
                 const auto* in = source.getReadPointer (juce::jmin (ch, sourceChannels - 1));
-                const float s = in[index] + frac * (in[index + 1] - in[index]);
+                float s = in[index] + frac * (in[index + 1] - in[index]);
+
+                if (filtering && ch == 0)
+                {
+                    v.lowState += coeff * (s - v.lowState);
+                    s = knob > 0.0f ? v.lowState : s - v.lowState;
+                }
+                else if (filtering)
+                {
+                    // il secondo canale segue lo stesso filtro, senza una
+                    // memoria sua: il campione e' lo stesso suono
+                    s = knob > 0.0f ? v.lowState : s - v.lowState;
+                }
+
                 buffer.addSample (ch, i, s * fade * (ch == 0 ? leftGain : rightGain));
             }
 

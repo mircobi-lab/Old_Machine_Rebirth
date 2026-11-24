@@ -2,6 +2,7 @@
 
 #include "control/ControlMap.h"
 #include "engine/Chopper.h"
+#include "engine/Compressor.h"
 #include "engine/Cleaner.h"
 #include "engine/Recorder.h"
 #include "engine/Sequencer.h"
@@ -68,6 +69,10 @@ public:
     // Fa sentire il campione del pad scelto senza scriverlo nella sequenza:
     // serve per sentire il ritaglio mentre lo si muove.
     void auditionSelected();
+
+    // Tira o accorcia il campione del pad perche' duri un numero intero di
+    // battute al tempo di adesso, senza cambiargli il tono.
+    void warpSelected();
     bool buttonLit (const control::Control&) const;
 
     // Come deve stare acceso un tasto. I tasti del trasporto, in basso a
@@ -95,6 +100,8 @@ public:
     SampleEngine& engine() { return sampler; }
     Recorder& recorder() { return rec; }
     Sequencer& sequencer() { return seq; }
+    Compressor& compressor() { return comp; }
+    bool compressorOn() const { return compressing; }
     const Sequencer& sequencer() const { return seq; }
     const Recorder& recorder() const { return rec; }
 
@@ -164,6 +171,7 @@ public:
     std::function<void()> onFillRequested;    // chiedi un file lungo da tagliare a fette uguali
     std::function<void()> onSaveScene, onOpenScene, onToLibrary, onBrowseLibrary;
     std::function<void()> onSetup;             // apri la scheda audio
+    std::function<void (int note, int velocity)> onPadPlayed;   // verso il MIDI di fuori
     std::function<void (cleaner::Preset)> onCleanRequested;  // pulisci il campione del pad
 
 private:
@@ -186,6 +194,8 @@ private:
     SampleEngine sampler;
     Recorder rec;
     Sequencer seq;
+    Compressor comp;
+    bool compressing = false;
     int recordings = 0;
     int slices = 16;                    // in quante fette taglia RIEMPI
     bool soloMode = false;

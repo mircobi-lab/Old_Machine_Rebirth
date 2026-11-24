@@ -59,6 +59,11 @@ void Sequencer::setQuantiseTicks (int t)
     quantise = juce::jlimit (1, ticksPerBar, t);
 }
 
+void Sequencer::setSpeed (double factor)
+{
+    speedFactor = juce::jlimit (0.25, 4.0, factor);
+}
+
 void Sequencer::setSwing (int percent)
 {
     swingPercent = juce::jlimit (50, 75, percent);
@@ -76,10 +81,66 @@ void Sequencer::setSequence (int index)
     editing.store (false);
 }
 
+void Sequencer::setCountInBars (int bars)
+{
+    countIn = juce::jlimit (0, 2, bars);
+}
+
 void Sequencer::play()
 {
+    // con l'avvio contato il metronomo batte una o due battute a vuoto prima
+    // che parta davvero: serve per entrare a tempo quando si registra
+    if (countIn > 0 && ! playing.load())
+    {
+        countTicks = 0.0;
+        counting.store (true);
+    }
+
     playing.store (true);
     stopPressedOnce.store (false);
+}
+
+void Sequencer::addToSong (int sequence, int repeats)
+{
+    if (songSteps >= maxSongSteps || ! juce::isPositiveAndBelow (sequence, numSequences))
+        return;
+
+    songList[(size_t) songSteps] = { sequence, juce::jlimit (1, 99, repeats) };
+    ++songSteps;
+}
+
+void Sequencer::removeLastSongStep()
+{
+    if (songSteps > 0)
+        --songSteps;
+
+    if (songAt.load() >= songSteps)
+        songAt.store (0);
+}
+
+void Sequencer::clearSong()
+{
+    songSteps = 0;
+    songAt.store (0);
+    songRepeat = 0;
+}
+
+Sequencer::SongStep Sequencer::songStep (int index) const
+{
+    if (! juce::isPositiveAndBelow (index, songSteps))
+        return {};
+
+    return songList[(size_t) index];
+}
+
+void Sequencer::setSongMode (bool on)
+{
+    song.store (on && songSteps > 0);
+    songAt.store (0);
+    songRepeat = 0;
+
+    if (song.load())
+        setSequence (songList[0].sequence);
 }
 
 void Sequencer::stop()
@@ -113,7 +174,7 @@ void Sequencer::toggleRecord()
     if (on)
     {
         overdub.store (false);
-        playing.store (true);
+        play();            // che passa anche dall'avvio contato, se c'e'
     }
 }
 
@@ -124,7 +185,7 @@ void Sequencer::toggleOverdub()
     if (on)
     {
         recording.store (true);
-        playing.store (true);
+        play();
     }
 }
 
@@ -140,7 +201,7 @@ int Sequencer::quantised (int tick) const
 
 void Sequencer::recordHit (int drum, int velocity)
 {
-    if (! recording.load() || ! playing.load())
+    if (! recording.load() || ! playing.load() || counting.load())
         return;
 
     auto& sequence = sequences[current];
@@ -393,14 +454,30 @@ void Sequencer::process (int numSamples, double bpm, SampleEngine& engine)
         return;
 
     const double beatsPerSecond = juce::jmax (20.0, bpm) / 60.0;
-    const double ticksPerSample = beatsPerSecond * (double) ticksPerBeat / rate;
+    const double ticksPerSample = beatsPerSecond * (double) ticksPerBeat * speedFactor / rate;
+
+    // l'avvio contato: si conta e basta, niente colpi e niente registrazione
+    if (counting.load())
+    {
+        countTicks += ticksPerSample * numSamples;
+        if (countTicks < (double) (countIn * ticksPerBar))
+            return;
+
+        counting.store (false);
+        ticks = 0.0;
+    }
+
     const int length = lengthInTicks();
 
     const int from = (int) ticks % length;
     ticks += ticksPerSample * numSamples;
 
+    bool wrapped = false;
     while (ticks >= length)
+    {
         ticks -= length;
+        wrapped = true;
+    }
 
     const int to = (int) ticks % length;
 
@@ -408,4 +485,21 @@ void Sequencer::process (int numSamples, double bpm, SampleEngine& engine)
 
     if (from != to)
         fire (engine, from, to);
+
+    // finito il giro, nel brano si passa al pezzo dopo
+    if (wrapped && song.load() && songSteps > 0)
+    {
+        ++songRepeat;
+
+        const int at = songAt.load();
+        if (songRepeat >= songList[(size_t) at].repeats)
+        {
+            songRepeat = 0;
+            const int next = (at + 1) % songSteps;
+            songAt.store (next);
+
+            // il cambio di sequenza qui dentro non alloca: sposta un indice
+            current = songList[(size_t) next].sequence;
+        }
+    }
 }

@@ -55,12 +55,14 @@ set(REBIRTH_CORE_SOURCES
     ${SAMPLE_FORGE_DIR}/Engine/SampleForgeEngine.cpp
     ${SONG_FIXER_DIR}/Dsp/SpectralCleaner.cpp
     Source/engine/Chopper.cpp
+    Source/engine/Compressor.cpp
     Source/engine/Drum.cpp
     Source/engine/Recorder.cpp
     Source/engine/Sequencer.cpp
     Source/engine/SoundKind.cpp
     Source/push2/Waveform.cpp
     Source/engine/Slicer.cpp
+    Source/engine/Warp.cpp
     Source/machine/Library.cpp
     Source/machine/StepGrid.cpp
     Source/ui/Lang.cpp

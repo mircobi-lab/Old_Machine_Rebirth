@@ -218,11 +218,14 @@ public:
             m.command (sample, false);
             expectEquals (m.softKeyLabels()[0], juce::String ("ARMA"));
 
-            // una pagina che non ne ha ancora li lascia spenti
+            // ogni pagina ha i suoi: il MIX comincia col compressore
             auto mix = page (control::Command::pageMix);
             m.command (mix, true);
             m.command (mix, false);
-            expect (m.softKeyLabels()[0].isEmpty());
+            expectEquals (m.softKeyLabels()[0], juce::String ("COMPRESSORE"));
+
+            // e i tasti che una pagina non usa restano spenti
+            expect (m.softKeyLabels()[7].isEmpty());
         }
 
         song.deleteFile();

@@ -74,6 +74,7 @@ private:
         bool active = false;
         bool looping = false;
         int fadeOut = 0;          // campioni che restano prima di spegnersi
+        float lowState = 0.0f;    // memoria del filtro, una per voce
     };
 
     // velocity negativa vuol dire "pad mollato"

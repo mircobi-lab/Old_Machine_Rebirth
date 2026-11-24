@@ -13,10 +13,10 @@ pannello, e se c'e' gia'.
 | INPUT CONFIG (shift) | sceglie l'ingresso da cui campionare | tasto AUDIO della finestra | fatto: l'ingresso si scegle nella scheda audio |
 | SEQ | pagina della sequenza | tasto SEQUENZA | pagina c'e', sequencer no |
 | STEP EDIT (shift) | correzione nota per nota | pagina PASSO, 32 passi nella meta' di sopra della griglia | fatto |
-| PAD FX | effetti sul pad | da decidere | manca |
-| FLEX BEAT (shift) | ripetizioni ritmiche | da decidere | manca |
-| KNOB FX | effetti sui rotativi | i nostri otto rotativi | manca |
-| FX SELECT (shift) | sceglie l'effetto | pagina SUONO | manca |
+| PAD FX | effetti sul pad | pagina MIX, quinto rotativo: il filtro | fatto, un effetto solo |
+| FLEX BEAT (shift) | ripetizioni ritmiche | tasto NOTE REPEAT | fatto |
+| KNOB FX | effetti sui rotativi | pagina MIX: soglia, rapporto, attacco, rilascio, filtro | fatto |
+| FX SELECT (shift) | sceglie l'effetto | pagina MIX | manca: di effetti ce n'e' uno solo |
 
 ## Come suonano i pad
 
@@ -46,8 +46,8 @@ pannello, e se c'e' gia'.
 | HALF SPEED (pad 6) | meta' velocita' | SHIFT + ottava giu' (un'ottava sotto) | **fatto** |
 | DOUBLE SPEED (pad 7) | doppia velocita' | SHIFT + ottava su | **fatto** |
 | TIME CORRECT (pad 14) | quantizza quello che hai suonato | colonna a destra dei pad | passo scelto, sequencer no |
-| WARP (pad 15) | cambia durata senza cambiare tono | pagina SUONO | manca |
-| COMPRESSOR (pad 5) | compressore sull'uscita | pagina MIX | manca |
+| WARP (pad 15) | cambia durata senza cambiare tono | pagina SUONO, tasto WARP | fatto |
+| COMPRESSOR (pad 5) | compressore sull'uscita | pagina MIX, tasto COMPRESSORE, o SHIFT + METRO | fatto |
 | SAMPLE SELECT | sceglie il campione del pad | tasto CARICA, e trascinando i file | **fatto** |
 | SAVE SAMPLE (shift) | salva il campione | pagina DISCO, tasto IN LIBRERIA | fatto |
 
@@ -61,14 +61,14 @@ pannello, e se c'e' gia'.
 | PLAY | parte | tasto PLAY | fatto |
 | CONTINUE (shift) | riparte da dove era | tasto PLAY (lo STOP non azzera) | fatto |
 | STOP | ferma tutto | tasto STOP | **fatto** (zittisce le voci) |
-| COUNT-IN (pad 4) | battute di avvio | pagina SEQUENZA | manca |
+| COUNT-IN (pad 4) | battute di avvio | pagina BRANO, tasto AVVIO CONTATO | fatto |
 | HALF SEQ (pad 2) | dimezza la sequenza | pagina SEQUENZA, tasto DIMEZZA | fatto |
 | DOUBLE SEQ (pad 3) | la raddoppia | tasto RADDOPPIA | fatto |
 | REC QUANTIZE (pad 10) | quantizza mentre registri | tasto CORREGGI | fatto |
 | RESAMPLE (pad 11) | ricampiona quello che esce | tasto RICAMPIONA | fatto |
-| SONG (pad 12) | incatena le sequenze | pagina BRANO | manca: le sequenze si cambiano a mano, non ancora incatenate |
+| SONG (pad 12) | incatena le sequenze | pagina BRANO | fatto |
 | PROJECT (pad 16) | il progetto intero | pagina DISCO, SALVA SCENA e APRI SCENA | fatto |
-| MIDI CONFIG (pad 8) | ingressi e uscite MIDI | pagina DISCO | manca |
+| MIDI CONFIG (pad 8) | ingressi e uscite MIDI | tasto AUDIO della finestra | fatto |
 
 ## Servizio
 
@@ -226,3 +226,44 @@ altrimenti fa clic.
 
 Il rovescio, che prima stava sul settimo rotativo, e' passato sul tasto
 ROVESCIO sotto il display: e' un interruttore, non un valore da girare.
+
+## Le ultime funzioni prese dal pannello
+
+**Avvio contato** (COUNT-IN). Pagina BRANO, tasto AVVIO CONTATO: zero, una o
+due battute. Quando si registra il metronomo batte quelle battute a vuoto
+prima che parta davvero, e quello che si suona durante il conteggio non
+finisce nella sequenza.
+
+**Brano** (SONG). Pagina BRANO: AGGIUNGI mette in coda la sequenza di adesso,
+TOGLI leva l'ultima, BRANO accende l'incatenamento. Finito il giro di una
+sequenza si passa da sola alla prossima, e alla fine si ricomincia. Il display
+dice a che pezzo sta.
+
+**Velocita'** (HALF SPEED, DOUBLE SPEED). Pagina SEQUENZA, tasto VELOCITA':
+meta', normale, doppia. Il tempo resta quello, cambia il passo con cui gira la
+sequenza.
+
+**Compressore** (COMPRESSOR). Pagina MIX, tasto COMPRESSORE o SHIFT + METRO.
+E' quello classico a rilevazione di picco, coi due canali legati insieme, se
+no l'immagine stereo si sposta a ogni colpo di cassa. I primi quattro rotativi
+sono soglia, rapporto, attacco e rilascio; il recupero di volume lo calcola da
+solo in base a quanto schiaccia.
+
+**Filtro sul pad** (PAD FX, KNOB FX). Pagina MIX, quinto rotativo: una
+manopola sola, girata a sinistra toglie i bassi, a destra toglie gli acuti.
+Un polo solo, dolce come quello delle macchine vecchie, con la memoria del
+filtro dentro ogni voce.
+
+**Warp** (WARP). Pagina SUONO, tasto WARP. Il campione viene tagliato a
+pezzetti che si sovrappongono e rincollato piu' lungo o piu' corto, cercando
+ogni volta il punto in cui i due pezzi si somigliano di piu': la durata cambia
+e il tono resta dov'era. Il fattore lo decide da solo, perche' il campione
+duri un numero intero di battute al tempo di adesso.
+
+**MIDI** (MIDI CONFIG, INPUT CONFIG). Tasto AUDIO della finestra: li' dentro
+adesso ci sono anche gli ingressi MIDI e l'uscita. Le note che arrivano
+suonano i pad col conto del Push (36 in basso a sinistra), quindi un'altra
+griglia funziona senza configurare niente, e quello che si batte esce sul
+canale 16, come i suoni di batteria della macchina vera.
+
+**Tutti suonano** (UNMUTE ALL). SHIFT con MUTE, o il tasto nella pagina MIX.

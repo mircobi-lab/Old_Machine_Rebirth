@@ -1,5 +1,7 @@
 #include "MainComponent.h"
 
+#include "push2/Push2Protocol.h"
+
 #include <BinaryData.h>
 
 MainComponent::MainComponent()
@@ -13,15 +15,26 @@ MainComponent::MainComponent()
 
     mpc.onSetup = [this] { audioButton.triggerClick(); };
 
+    // quello che si batte esce anche sul MIDI, canale 16 come i suoni di
+    // batteria della macchina vera
+    mpc.onPadPlayed = [this] (int note, int velocity)
+    {
+        sendMidiOut (velocity > 0 ? juce::MidiMessage::noteOn (16, note, (juce::uint8) velocity)
+                                  : juce::MidiMessage::noteOff (16, note));
+    };
+
     audioButton.onClick = [this]
     {
         auto selector = std::make_unique<juce::AudioDeviceSelectorComponent> (
-            deviceManager, 1, 2, 1, 2, false, false, true, false);
-        selector->setSize (500, 420);
+            deviceManager, 1, 2, 1, 2,
+            true,    // gli ingressi MIDI: tastiere e pad di fuori
+            true,    // l'uscita MIDI: le macchine da far suonare
+            true, false);
+        selector->setSize (500, 520);
 
         juce::DialogWindow::LaunchOptions o;
         o.content.setOwned (selector.release());
-        o.dialogTitle = "SCHEDA AUDIO";
+        o.dialogTitle = "SCHEDA AUDIO E MIDI";
         o.dialogBackgroundColour = juce::Colour (0xff0a0a0b);
         o.escapeKeyTriggersCloseButton = true;
         o.useNativeTitleBar = true;
@@ -112,6 +125,10 @@ MainComponent::MainComponent()
     push->onTouchStrip = [this] (float position) { mpc.setMasterGain (position); };
 
     loadLanguage();
+
+    // si ascoltano tutti gli ingressi MIDI accesi nella finestra della scheda
+    deviceManager.addMidiInputDeviceCallback ({}, this);
+
     startOsc();
     retranslate();
     refreshSurfaces();
@@ -444,6 +461,46 @@ void MainComponent::loadOntoSelected()
 
         repaint();
     });
+}
+
+void MainComponent::handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMessage& m)
+{
+    // Le note arrivano col conto del Push (36 in basso a sinistra, 99 in alto
+    // a destra): cosi' un altro controller a griglia suona i pad senza
+    // bisogno di configurare niente.
+    if (! m.isNoteOnOrOff())
+        return;
+
+    const auto position = push2::padPosition (m.getNoteNumber());
+    if (! position)
+        return;
+
+    const auto pad = machine::padForCell (position->first, position->second, mpc.bankGroup());
+
+    // il MIDI arriva da un filo suo: la macchina si tocca dal filo dei messaggi
+    const bool on = m.isNoteOn() && m.getVelocity() > 0;
+    const int velocity = (int) m.getVelocity();
+    juce::Component::SafePointer<MainComponent> safe (this);
+
+    juce::MessageManager::callAsync ([safe, pad, on, velocity]
+    {
+        if (safe == nullptr)
+            return;
+
+        if (on)
+            safe->mpc.padDown (pad, velocity);
+        else
+            safe->mpc.padUp (pad);
+
+        safe->refreshSurfaces();
+        safe->repaint();
+    });
+}
+
+void MainComponent::sendMidiOut (const juce::MidiMessage& m)
+{
+    if (auto* out = deviceManager.getDefaultMidiOutput())
+        out->sendMessageNow (m);
 }
 
 void MainComponent::setBusy (juce::String text)

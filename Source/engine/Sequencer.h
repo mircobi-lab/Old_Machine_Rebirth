@@ -45,6 +45,9 @@ public:
     void play();
     void stop();                     // la seconda volta torna all'inizio
     void toggleRecord();             // arma la registrazione
+    void setCountInBars (int);       // 0, 1 o 2 battute di avvio
+    int countInBars() const { return countIn; }
+    bool isCountingIn() const { return counting.load(); }
     void toggleOverdub();
     void rewind();
 
@@ -76,6 +79,20 @@ public:
     void doubleLength();             // raddoppia le battute copiando i colpi
     void halveLength();
 
+    // --- il brano: le sequenze una dietro l'altra
+    struct SongStep { int sequence = 0; int repeats = 1; };
+    static constexpr int maxSongSteps = 64;
+
+    void addToSong (int sequence, int repeats = 1);
+    void removeLastSongStep();
+    void clearSong();
+    int songLength() const { return songSteps; }
+    SongStep songStep (int index) const;
+    int songPosition() const { return songAt.load(); }
+
+    void setSongMode (bool);
+    bool songMode() const { return song.load(); }
+
     // --- stato
     int sequenceIndex() const { return current; }
     void setSequence (int index);
@@ -92,6 +109,11 @@ public:
     bool timingCorrect() const { return correct.load(); }
     void setQuantiseTicks (int);     // a quanto si incolla il colpo
     int quantiseTicks() const { return quantise; }
+
+    // La sequenza a meta' o a doppia velocita', come HALF SPEED e DOUBLE
+    // SPEED sulla macchina vera: il tempo resta quello, cambia il passo.
+    void setSpeed (double);
+    double speed() const { return speedFactor; }
 
     void setSwing (int percent);     // 50 = niente, 75 = tanto
     int swing() const { return swingPercent; }
@@ -133,4 +155,15 @@ private:
 
     int quantise = ticksPerBeat / 4;         // un sedicesimo
     int swingPercent = 50;
+    double speedFactor = 1.0;
+
+    int countIn = 0;                         // battute prima di partire
+    std::atomic<bool> counting { false };
+    double countTicks = 0.0;
+
+    std::array<SongStep, maxSongSteps> songList {};
+    int songSteps = 0;
+    std::atomic<bool> song { false };
+    std::atomic<int> songAt { 0 };
+    int songRepeat = 0;                      // a che giro sta il passo di adesso
 };

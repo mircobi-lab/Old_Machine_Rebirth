@@ -15,6 +15,7 @@
 // telefono quando il Push non c'e'.
 class MainComponent final : public juce::AudioAppComponent,
                             public juce::FileDragAndDropTarget,
+                            private juce::MidiInputCallback,
                             private juce::Timer
 {
 public:
@@ -38,6 +39,11 @@ private:
     void refreshSurfaces();
     void refreshLights();
     void refreshWave();
+
+    // MIDI CONFIG: i pad si suonano anche da fuori, e quello che si batte
+    // esce verso le altre macchine.
+    void handleIncomingMidiMessage (juce::MidiInput*, const juce::MidiMessage&) override;
+    void sendMidiOut (const juce::MidiMessage&);
     juce::Rectangle<int> cellBounds (int row, int column) const;
     std::optional<machine::PadRef> padAt (juce::Point<int>) const;
     void loadOntoSelected();
