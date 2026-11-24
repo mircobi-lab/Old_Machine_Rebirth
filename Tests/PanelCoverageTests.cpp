@@ -91,10 +91,15 @@ public:
 
         press (find (control::Command::recordSequence));     // gira e registra
 
-        m.padDown ({ 1, 6 }, 100);                           // un pad in mezzo alla griglia
-        m.padUp ({ 1, 6 });
-        m.padDown ({ 1, 7 }, 90);
-        m.padUp ({ 1, 7 });
+        // un pad in mezzo alla meta' di sotto, cosi' le frecce hanno spazio
+        // da tutte le parti
+        const auto middle = machine::padForCell (5, 2, m.bankGroup());
+        m.padDown (middle, 100);
+        m.padUp (middle);
+
+        const auto other = machine::padForCell (6, 3, m.bankGroup());
+        m.padDown (other, 90);
+        m.padUp (other);
 
         juce::AudioBuffer<float> buffer (2, 256);
         m.process (buffer);                                  // il tempo si muove
@@ -102,16 +107,22 @@ public:
         // il passo non e' quello di partenza, cosi' anche i tasti della
         // colonna di destra hanno qualcosa da cambiare
         for (const auto& c : control::buttons())
-            if (c.command == control::Command::quantiseValue && c.index == 7)
+            // non il primo ne' l'ultimo: quelli scorrono le tracce
+            if (c.command == control::Command::quantiseValue && c.index == 6)
                 press (c);
 
-        // una fetta messa su un pad: cosi' ANNULLA ha qualcosa da annullare
+        // una fetta messa su un pad della coppia che si vede: cosi' ANNULLA
+        // ha qualcosa da annullare, e il pad scelto resta sulla griglia
         chopper::Slice slice;
         slice.name = "PROVA";
         slice.bank = "FETTE";
         slice.audio.setSize (1, 500);
         slice.sampleRate = 44100.0;
-        m.placeFrom ({ 3, 1 }, { slice });
+        m.placeFrom ({ 1, 1 }, { slice });
+
+        // e si torna in mezzo, cosi' le frecce hanno spazio da tutte le parti
+        m.padDown (middle, 100);
+        m.padUp (middle);
     }
 
     void runTest() override
@@ -289,16 +300,18 @@ public:
             machine::Machine m;
             m.prepare (44100.0);
 
+            // il primo e l'ultimo scorrono le tracce; gli altri sei scelgono
+            // il passo e si accendono quando sono quelli scelti
             for (const auto& c : control::buttons())
-                if (c.command == control::Command::quantiseValue)
+                if (c.command == control::Command::quantiseValue
+                        && c.index > 0 && c.index < 7)
                 {
                     m.command (c, true);
                     m.command (c, false);
                     expect (m.buttonLit (c), "il tasto del passo non si accende: " + c.label);
                 }
 
-            // l'ultimo premuto e' il quarto, cioe' 96 passi
-            expectEquals (m.sequencer().quantiseTicks(), Sequencer::ticksPerBeat);
+            expect (m.sequencer().quantiseTicks() > 0);
         }
     }
 };

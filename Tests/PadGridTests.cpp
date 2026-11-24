@@ -11,13 +11,17 @@ public:
 
     void runTest() override
     {
-        beginTest ("i quattro quadranti sono quattro banchi");
+        beginTest ("i suoni stanno nelle quattro file di sotto, due banchi");
         {
             // riga 7 = in basso sul Push
             expect (padForCell (7, 0, 0) == PadRef { 0, 1 });    // A1, in basso a sinistra
             expect (padForCell (7, 4, 0) == PadRef { 1, 1 });    // B1
-            expect (padForCell (3, 0, 0) == PadRef { 2, 1 });    // C1
-            expect (padForCell (3, 4, 0) == PadRef { 3, 1 });    // D1
+            expect (isSoundPad (padForCell (7, 0, 0)));
+            expect (isSoundPad (padForCell (4, 7, 0)));
+
+            // le quattro file di sopra sono le sequenze, non suoni
+            expect (! isSoundPad (padForCell (3, 0, 0)));
+            expect (! isSoundPad (padForCell (0, 7, 0)));
         }
 
         beginTest ("dentro il banco il pad 1 sta in basso a sinistra e il 16 in alto a destra");
@@ -28,12 +32,19 @@ public:
             expect (padForCell (4, 3, 0) == PadRef { 0, 16 });
         }
 
-        beginTest ("il secondo gruppo sono i banchi da E a H");
+        beginTest ("la seconda coppia sono i banchi C e D");
         {
-            expect (padForCell (7, 0, 1) == PadRef { 4, 1 });    // E1
-            expect (padForCell (0, 7, 1) == PadRef { 7, 16 });   // H16
-            expectEquals (bankName (4), juce::String ("E"));
-            expectEquals (bankName (7), juce::String ("H"));
+            expect (padForCell (7, 0, 1) == PadRef { 2, 1 });    // C1
+            expect (padForCell (7, 4, 1) == PadRef { 3, 1 });    // D1
+            expect (padForCell (4, 7, 1) == PadRef { 3, 16 });   // D16
+            expect (isSoundPad (padForCell (7, 0, 1)));
+
+            expectEquals (bankName (2), juce::String ("C"));
+            expectEquals (bankName (3), juce::String ("D"));
+
+            // i 64 suoni stanno tutti nelle due coppie
+            expectEquals (drumIndex (padForCell (7, 0, 0)), 0);
+            expectEquals (drumIndex (padForCell (4, 7, 1)), soundDrums - 1);
         }
 
         beginTest ("andare e tornare dalla cella al pad");
@@ -52,8 +63,8 @@ public:
 
         beginTest ("un banco che non e' sulla griglia non ha cella");
         {
-            expect (! cellForPad ({ 5, 1 }, 0).has_value());
-            expect (! cellForPad ({ 0, 1 }, 1).has_value());
+            expect (! cellForPad ({ 2, 1 }, 0).has_value(), "C non sta nella prima coppia");
+            expect (! cellForPad ({ 0, 1 }, 1).has_value(), "A non sta nella seconda coppia");
         }
 
         beginTest ("l'indice del suono in memoria");

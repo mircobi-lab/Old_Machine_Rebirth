@@ -119,7 +119,8 @@ public:
                     "Note Off doveva diventare TENUTO");
 
             // la famiglia si indovina dal nome, cosi' i colori tornano
-            expect (m.engine().drum (0).kind == sound::Kind::batteria);
+            expect (m.engine().drum (0).kind == sound::Kind::cassa,
+                    "il kick doveva essere riconosciuto come cassa");
         }
 
         beginTest ("i campioni si trovano anche se stanno li' accanto");

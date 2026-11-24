@@ -15,13 +15,16 @@ struct Row
 const Row table[] =
 {
     { Kind::generico,    "SUONO",       0xff4a4d52 },   // grigio scuro
-    { Kind::batteria,    "BATTERIA",    0xff9b9da2 },   // grigio
-    { Kind::percussioni, "PERCUSSIONI", 0xff6f757c },   // grigio bluastro
-    { Kind::voce,        "VOCE",        0xff5fc8ff },   // celeste
-    { Kind::giro,        "GIRI",        0xff3d8bff },   // blu
+    { Kind::cassa,       "CASSA",       0xff16307a },   // blu notte: il piu' cupo
+    { Kind::tom,         "TOM",         0xff2a5fc0 },   // blu
+    { Kind::rullante,    "RULLANTE",    0xff3d8bff },   // blu acceso
+    { Kind::percussioni, "PERCUSSIONI", 0xff58a8e8 },   // azzurro
+    { Kind::piatti,      "PIATTI",      0xff7fe0ff },   // azzurro chiaro
+    { Kind::voce,        "VOCE",        0xffc9ccd1 },   // grigio chiaro
+    { Kind::giro,        "GIRI",        0xff9b9da2 },   // grigio
     { Kind::accordi,     "ACCORDI",     0xff1f8a4c },   // verde scuro
-    { Kind::basso,       "BASSO",       0xff1b3fa0 },   // blu notte
-    { Kind::registrato,  "REGISTRATO",  0xffd6d8dc }    // grigio chiaro
+    { Kind::basso,       "BASSO",       0xff12663a },   // verde piu' cupo
+    { Kind::registrato,  "REGISTRATO",  0xff6f757c }    // grigio bluastro
 };
 
 const Row& rowFor (Kind k)
@@ -82,15 +85,32 @@ Kind guessFromName (const juce::String& text)
 
     const auto has = [&t] (const char* word) { return t.contains (word); };
 
-    if (has ("CASSA") || has ("KICK") || has ("RULLANTE") || has ("SNARE")
-            || has ("CHARLES") || has ("HAT") || has ("HIHAT") || has ("BATT")
-            || has ("DRUM") || has ("TOM") || has ("RIM") || has ("CLAP")
-            || has ("BATTIMANI") || has ("CRASH") || has ("RIDE"))
-        return Kind::batteria;
+    // Prima i piatti: certi nomi tengono dentro anche la parola della cassa
+    // (BD_CRASH), e il piatto vince perche' e' quello che si sente.
+    if (has ("CHARLES") || has ("HAT") || has ("HH") || has ("CRASH")
+            || has ("CRS") || has ("RIDE") || has ("RI_") || has ("CYM")
+            || has ("SPLASH") || has ("CHINA") || has ("PIATT") || has ("CUP")
+            || has ("BELL "))
+        return Kind::piatti;
+
+    if (has ("RULLANTE") || has ("SNARE") || has ("SN") || has ("SD_")
+            || has ("RIM") || has ("CLAP") || has ("BATTIMANI") || has ("STICK"))
+        return Kind::rullante;
+
+    if (has ("TOM") || has ("TIMB") || has ("FLOOR"))
+        return Kind::tom;
+
+    if (has ("CASSA") || has ("KICK") || has ("_BD") || has ("BD_")
+            || has ("BASSDRUM") || has ("BASS DRUM"))
+        return Kind::cassa;
 
     if (has ("PERC") || has ("CONGA") || has ("BONGO") || has ("SHAKER")
-            || has ("TAMB") || has ("CAMPANA") || has ("COWBELL") || has ("BLOCK"))
+            || has ("TAMB") || has ("CAMPANA") || has ("COWBELL") || has ("BLOCK")
+            || has ("CLAVE") || has ("GUIRO") || has ("CABASA"))
         return Kind::percussioni;
+
+    if (has ("DRUM") || has ("BATT"))
+        return Kind::rullante;
 
     if (has ("VOCE") || has ("VOX") || has ("VOC") || has ("CORO")
             || has ("CANTO") || has ("PAROLA") || has ("ACAPELLA") || has ("VOICE"))

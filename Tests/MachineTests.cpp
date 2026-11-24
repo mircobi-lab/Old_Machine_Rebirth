@@ -33,7 +33,8 @@ public:
             expect (m.selectedPad() == PadRef { 0, 1 });
             expect (m.lightFor ({ 0, 1 }) == PadLight::selected);
             expect (m.lightFor ({ 0, 2 }) == PadLight::loaded, "il rullante c'e'");
-            expect (m.lightFor ({ 0, 16 }) == PadLight::empty, "questo e' vuoto");
+            expect (m.lightFor ({ 0, 16 }) == PadLight::off,
+                    "un pad senza suono deve restare spento");
         }
 
         beginTest ("battere un pad lo sceglie e lo fa suonare");

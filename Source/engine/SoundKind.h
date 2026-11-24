@@ -4,16 +4,23 @@
 
 // A che famiglia appartiene un suono, e di che colore si accende il suo pad.
 //
-// I colori stanno nelle tinte dello stile MBStudio: grigi, blu, celeste e
-// verde scuro, niente arancioni o viola. Cosi' guardando la griglia si capisce
-// subito dove sta la batteria e dove stanno le voci, senza leggere il display.
+// I colori stanno nelle tinte dello stile MBStudio: blu, celeste, verde scuro
+// e grigi, niente arancioni o viola.
+//
+// La batteria e' divisa per strumento e va dal blu piu' cupo all'azzurro piu'
+// chiaro salendo di tono: cassa, tom, rullante, percussioni, piatti. Cosi'
+// guardando la griglia si legge il kit senza leggere il display, e i piatti
+// non si confondono con la cassa.
 namespace sound
 {
 
 enum class Kind
 {
     generico,
-    batteria,
+    cassa,          // kick
+    rullante,       // snare, rim, battimani
+    piatti,         // charleston, crash, ride
+    tom,
     percussioni,
     voce,
     giro,
@@ -22,7 +29,7 @@ enum class Kind
     registrato
 };
 
-constexpr int numKinds = 8;
+constexpr int numKinds = 11;
 
 Kind kindFromIndex (int);
 int indexOf (Kind);

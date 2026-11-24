@@ -15,19 +15,25 @@ public:
 
     void runTest() override
     {
-        beginTest ("la batteria e' grigia e le voci celesti");
+        beginTest ("la batteria va dal blu cupo all'azzurro chiaro");
         {
-            const auto drums = sound::colourSelected (sound::Kind::batteria);
-            const auto voice = sound::colourSelected (sound::Kind::voce);
+            const auto kick = sound::colourSelected (sound::Kind::cassa);
+            const auto snare = sound::colourSelected (sound::Kind::rullante);
+            const auto cymbals = sound::colourSelected (sound::Kind::piatti);
             const auto chords = sound::colourSelected (sound::Kind::accordi);
 
-            // grigio: le tre componenti vicine fra loro
-            expect (std::abs ((int) drums.getRed() - (int) drums.getBlue()) < 20,
-                    "la batteria non e' grigia");
+            // tutti e tre sono blu: il blu domina sul rosso
+            for (auto c : { kick, snare, cymbals })
+                expect (c.getBlue() > c.getRed() + 60, "non e' blu: " + c.toString());
 
-            // celeste: il blu domina e il verde e' alto
-            expect (voice.getBlue() > voice.getRed() + 60, "la voce non e' celeste");
-            expect (voice.getGreen() > voice.getRed(), "la voce e' troppo blu");
+            // e si schiariscono salendo di tono
+            expect (kick.getPerceivedBrightness() < snare.getPerceivedBrightness(),
+                    "la cassa non e' piu' cupa del rullante");
+            expect (snare.getPerceivedBrightness() < cymbals.getPerceivedBrightness(),
+                    "i piatti non sono piu' chiari del rullante");
+
+            // i piatti sono azzurri, non blu pieni: anche il verde e' alto
+            expect (cymbals.getGreen() > cymbals.getRed() + 60, "i piatti non sono azzurri");
 
             // verde scuro: il verde domina e la luminosita' e' bassa
             expect (chords.getGreen() > chords.getRed() + 40, "gli accordi non sono verdi");
@@ -57,8 +63,13 @@ public:
 
         beginTest ("la famiglia si indovina dal nome del campione");
         {
-            expect (sound::guessFromName ("CASSA") == sound::Kind::batteria);
-            expect (sound::guessFromName ("kick 01.wav") == sound::Kind::batteria);
+            expect (sound::guessFromName ("CASSA") == sound::Kind::cassa);
+            expect (sound::guessFromName ("kick 01.wav") == sound::Kind::cassa);
+            expect (sound::guessFromName ("ST2AMBSN2") == sound::Kind::rullante,
+                    "il rullante di un kit vero non e' stato riconosciuto");
+            expect (sound::guessFromName ("AMB_CLHH3") == sound::Kind::piatti);
+            expect (sound::guessFromName ("16AMB_CRS1") == sound::Kind::piatti);
+            expect (sound::guessFromName ("R_AMBTOMF1") == sound::Kind::tom);
             expect (sound::guessFromName ("VOX LEAD") == sound::Kind::voce);
             expect (sound::guessFromName ("BASS 808") == sound::Kind::basso);
             expect (sound::guessFromName ("PIANO CHORD") == sound::Kind::accordi);
@@ -106,7 +117,9 @@ public:
             {
                 const machine::PadRef p { 0, pad };
                 const auto kind = m.kindFor (p);
-                expect (kind == sound::Kind::batteria || kind == sound::Kind::percussioni,
+                expect (kind == sound::Kind::cassa || kind == sound::Kind::rullante
+                            || kind == sound::Kind::piatti || kind == sound::Kind::tom
+                            || kind == sound::Kind::percussioni,
                         "pad " + juce::String (pad) + ": " + sound::name (kind));
             }
         }

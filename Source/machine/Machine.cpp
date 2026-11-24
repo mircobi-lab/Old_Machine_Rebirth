@@ -150,7 +150,7 @@ int Machine::playheadColumn() const
 
 void Machine::scrollTracks (int delta)
 {
-    const int limit = numDrums - stepRows;
+    const int limit = soundDrums - stepRows;
     trackOffset = juce::jlimit (0, juce::jmax (0, limit), trackOffset + delta);
 
     // la traccia in cima alla finestra diventa quella scelta: cosi' i pad
@@ -272,16 +272,17 @@ void Machine::padDown (PadRef p, int velocity)
 {
     const int index = drumIndex (p);
 
-    // Nella pagina PASSO le quattro file in alto non sono pad: sono i 32
-    // passi del suono scelto. Il controllo sta qui, cosi' vale per il Push,
-    // per l'OSC e per la finestra senza che nessuno dei tre sappia niente.
-    if (stepMode())
+    // Le quattro file in alto non sono pad: sono le sequenze, sempre, in
+    // qualunque pagina. Il controllo sta qui, cosi' vale per il Push, per
+    // l'OSC e per la finestra senza che nessuno dei tre sappia niente.
+    if (! isSoundPad (p))
+    {
         if (const auto cell = cellForPad (p, group))
             if (isStepCell (cell->first))
-            {
                 stepPressed (cell->first, cell->second);
-                return;
-            }
+
+        return;
+    }
 
     held[(size_t) index] = true;
 
@@ -300,10 +301,8 @@ void Machine::padDown (PadRef p, int velocity)
 
 void Machine::padUp (PadRef p)
 {
-    if (stepMode())
-        if (const auto cell = cellForPad (p, group))
-            if (isStepCell (cell->first))
-                return;
+    if (! isSoundPad (p))
+        return;
 
     const int index = drumIndex (p);
     held[(size_t) index] = false;
@@ -659,7 +658,7 @@ void Machine::command (const control::Control& c, bool down)
         case C::quantiseValue:
             // nella pagina PASSO i due tasti scena in cima e in fondo fanno
             // scorrere le tracce: gli altri sei restano il passo
-            if (stepMode() && (c.index == 0 || c.index == 7))
+            if ((c.index == 0 || c.index == 7))
             {
                 scrollTracks (c.index == 0 ? -stepRows : stepRows);
                 break;
@@ -672,7 +671,7 @@ void Machine::command (const control::Control& c, bool down)
 
         case C::layout:
             setBankGroup (group == 0 ? 1 : 0);
-            setMessage (group == 0 ? "BANCHI A-D" : "BANCHI E-H");
+            setMessage (group == 0 ? "BANCHI A-B" : "BANCHI C-D");
             break;
 
         case C::fullLevel:
@@ -1185,7 +1184,7 @@ PadLight Machine::lightFor (PadRef p) const
 {
     const int index = drumIndex (p);
 
-    if (stepMode())
+    if (! isSoundPad (p))
         if (const auto cell = cellForPad (p, group))
             if (isStepCell (cell->first))
             {
@@ -1208,13 +1207,18 @@ PadLight Machine::lightFor (PadRef p) const
                 return seq.hasHit (track, tick, window) ? PadLight::selected : PadLight::off;
             }
 
-    if (mutes[(size_t) index])
+    const bool loaded = sampler.drum (index).loaded();
+
+    if (mutes[(size_t) index] && loaded)
         return PadLight::muted;
-    if (index == drumIndex (selected))
+    if (index == drumIndex (selected) && loaded)
         return PadLight::selected;
     if (sixteenLevels)
         return PadLight::loaded;     // tutto il quadrante suona il suono scelto
-    return sampler.drum (index).loaded() ? PadLight::loaded : PadLight::empty;
+
+    // acceso solo dove c'e' un suono: un pad vuoto resta spento, cosi' si
+    // vede a colpo d'occhio quanto e' grande il banco caricato
+    return loaded ? PadLight::loaded : PadLight::off;
 }
 
 void Machine::setTempoFromOutside (double newTempo)
@@ -1326,11 +1330,9 @@ Machine::WaveMarkers Machine::waveMarkers() const
 
 sound::Kind Machine::kindFor (PadRef p) const
 {
-    // i passi e la barra del tempo sono celesti, come ha chiesto chi suona
-    if (stepMode())
-        if (const auto cell = cellForPad (p, group))
-            if (isStepCell (cell->first))
-                return sound::Kind::voce;
+    // i passi e la barra del tempo sono celesti
+    if (! isSoundPad (p))
+        return sound::Kind::piatti;
 
     return sampler.drum (drumIndex (p)).kind;
 }
@@ -1345,10 +1347,10 @@ bool Machine::buttonLit (const control::Control& c) const
         case C::pageStep: case C::pageSong: case C::pageMix: case C::pageDisk:
             return c.command == page;
         case C::quantiseValue:
-            if (stepMode() && c.index == 0)
+            if (c.index == 0)
                 return trackOffset > 0;
-            if (stepMode() && c.index == 7)
-                return trackOffset + stepRows < numDrums;
+            if (c.index == 7)
+                return trackOffset + stepRows < soundDrums;
             return c.index == quantise;
         case C::fullLevel:      return fullLevel;
         case C::sixteenLevels:  return sixteenLevels;
@@ -1617,11 +1619,19 @@ void Machine::clearAllPads()
 void Machine::moveSelection (int rows, int columns)
 {
     // si cammina sulla griglia come la si vede: riga 0 in alto
-    const auto cell = cellForPad (selected, group);
-    if (! cell)
-        return;
+    auto cell = cellForPad (selected, group);
 
-    const int row = juce::jlimit (0, 7, cell->first + rows);
+    // se il pad scelto non e' sulla griglia (e' in un'altra coppia di
+    // banchi), la freccia riporta le dita sul primo pad di quella che si vede
+    if (! cell)
+    {
+        select (padForCell (7, 0, group));
+        setMessage (bankName (selected.bank) + juce::String (selected.pad));
+        return;
+    }
+
+    // le frecce restano nella meta' di sotto: sopra ci sono le sequenze
+    const int row = juce::jlimit (4, 7, cell->first + rows);
     const int column = juce::jlimit (0, 7, cell->second + columns);
 
     select (padForCell (row, column, group));

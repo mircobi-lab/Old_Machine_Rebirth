@@ -19,7 +19,7 @@ juce::String bankName (const std::string& id)
 
 sound::Kind kindFor (const std::string& id)
 {
-    if (id == "drums")  return sound::Kind::batteria;
+    if (id == "drums")  return sound::Kind::rullante;    // batteria mischiata
     if (id == "vox")    return sound::Kind::voce;
     if (id == "loops")  return sound::Kind::giro;
     if (id == "chords") return sound::Kind::accordi;

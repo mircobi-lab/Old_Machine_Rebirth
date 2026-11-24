@@ -131,22 +131,45 @@ canale 14 del manuale e' il 15 di JUCE.
 Gli altri tasti sono bianchi, smorti quando il comando c'e' ma non e' attivo e
 pieni quando lo e'. Mute, solo e cancella sono ambra, il metronomo verde.
 
+## La griglia: sotto i suoni, sopra le sequenze
+
+Le otto file sono divise in due per sempre:
+
+- **le quattro di sotto sono i suoni**, due banchi da sedici: A a sinistra e B
+  a destra. Il tasto dei banchi passa alla seconda coppia, C e D. In tutto 64
+  pad, quanti ne ha un programma della macchina vera
+- **le quattro di sopra sono le sequenze**, in qualunque pagina
+
+Quando si carica un kit, i primi 32 suoni vanno nella prima coppia e quelli che
+avanzano nella seconda: un kit da 64 si divide da solo, e si passa da una
+all'altra col tasto dei banchi.
+
+**Acceso solo dove c'e' un suono.** Un pad vuoto resta spento, cosi' si vede a
+colpo d'occhio quanto e' grande il banco che si e' caricato.
+
 ## I colori dei pad
 
-Il colore dice di che famiglia e' il suono, cosi' guardando la griglia si capisce
-dove sta la batteria e dove stanno le voci senza leggere il display. Sono le
-tinte dello stile MBStudio: grigi, blu, celeste e verde scuro.
+Il colore dice che strumento e', non solo che e' un suono. La batteria va dal
+blu piu' cupo all'azzurro piu' chiaro salendo di tono, cosi' guardando la
+griglia si legge il kit senza leggere il display.
 
 | Famiglia | Colore |
 |---|---|
-| Batteria | grigio |
-| Percussioni | grigio bluastro |
-| Voce | celeste |
-| Giri e fette | blu |
+| Cassa | blu notte |
+| Tom | blu |
+| Rullante, rim, battimani | blu acceso |
+| Percussioni | azzurro |
+| Piatti: charleston, crash, ride | azzurro chiaro |
+| Voce | grigio chiaro |
+| Giri e fette | grigio |
 | Accordi | verde scuro |
-| Basso | blu notte |
-| Registrato | grigio chiaro |
+| Basso | verde piu' cupo |
+| Registrato | grigio bluastro |
 | Senza famiglia | grigio scuro |
+
+Lo strumento lo indovina il programma dal nome del campione, e riconosce anche
+le abbreviazioni dei kit vecchi (BD, SD, HH, CRS, TOM). Se sbaglia, l'ottavo
+rotativo della pagina SUONO lo cambia a mano.
 
 Ogni famiglia ha tre intensita': il pad fermo e' smorto, quello scelto e' pieno,
 quello che suona tira al bianco. Il pad vuoto e' quasi spento e quello mutato e'

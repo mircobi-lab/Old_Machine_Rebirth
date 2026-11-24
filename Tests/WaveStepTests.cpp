@@ -147,7 +147,8 @@ public:
             expectEquals (m.sequencer().eventCount(), 1, "il passo non e' stato scritto");
             expect (m.lightFor (stepPad) == machine::PadLight::selected,
                     "il passo scritto non si accende");
-            expect (m.kindFor (stepPad) == sound::Kind::voce, "il passo non e' celeste");
+            // l'azzurro chiaro della griglia e' lo stesso dei piatti
+            expect (m.kindFor (stepPad) == sound::Kind::piatti, "il passo non e' celeste");
 
             // premuto di nuovo si toglie, e resta spento
             m.padDown (stepPad, 100);
@@ -238,12 +239,21 @@ public:
             expectEquals (m.trackWindowStart(), machine::stepRows * 2);
             expectEquals (m.trackAt (0), machine::stepRows * 2);
 
-            // fuori dalla pagina PASSO quei tasti tornano a scegliere il passo
+            // le sequenze stanno in alto in qualunque pagina, quindi quei due
+            // tasti scorrono le tracce anche fuori dalla pagina PASSO
             press (m, page (control::Command::pageSound));
+            const int before = m.trackWindowStart();
             press (m, bottom);
-            expect (m.screenLines().joinIntoString (" ").contains ("1/4")
-                        || m.sequencer().quantiseTicks() == Sequencer::ticksPerBeat,
-                    "il tasto scena non sceglie piu' il passo");
+            expect (m.trackWindowStart() > before,
+                    "fuori dalla pagina PASSO il tasto scena non scorre piu'");
+
+            // gli altri sei restano quelli del passo
+            for (const auto& c : control::buttons())
+                if (c.command == control::Command::quantiseValue && c.index == 5)
+                {
+                    press (m, c);
+                    expect (m.buttonLit (c), "il tasto del passo non si accende");
+                }
         }
 
         beginTest ("la finestra dei passi si sposta avanti e indietro");

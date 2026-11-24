@@ -114,7 +114,7 @@ public:
 
             for (int i = 0; i < 3; ++i)
                 slices.push_back (makeSlice ("CASSA" + juce::String (i), "BATTERIA",
-                                             sound::Kind::batteria));
+                                             sound::Kind::cassa));
             for (int i = 0; i < 2; ++i)
                 slices.push_back (makeSlice ("VOCE" + juce::String (i), "VOCE",
                                              sound::Kind::voce));

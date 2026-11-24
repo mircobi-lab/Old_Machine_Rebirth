@@ -313,7 +313,10 @@ Quale dei tre formati sia, si capisce da quello che c'e' dentro e non dal
 nome: i modelli 1000 e 2500 si firmano in chiaro, il 2000 e il 2000XL con due
 byte in testa. Un file chiamato male si carica lo stesso.
 
-Caricare un kit **svuota i 64 pad dei banchi da A a D**, perche' un kit prende
+Caricare un kit riempie le quattro file di sotto del Push, due banchi da
+sedici: i primi 32 suoni nella prima coppia (A e B) e quelli che avanzano nella
+seconda (C e D), che si raggiunge col tasto dei banchi. Caricare **svuota i 64
+pad dei banchi da A a D**, perche' un kit prende
 il posto di un kit: senza quello resterebbero sotto i suoni di prima, mescolati
 ai nuovi. I banchi da E a H restano come sono. Sul display compare il nome del
 kit, quanti pad sono entrati e, se manca qualche campione, quanti sono e come

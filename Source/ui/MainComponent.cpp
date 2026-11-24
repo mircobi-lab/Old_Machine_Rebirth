@@ -452,7 +452,7 @@ void MainComponent::refreshSurfaces()
     if (osc != nullptr)
         osc->sendScreen (lines);
 
-    bankButton.setButtonText (lang::phrase (mpc.bankGroup() == 0 ? "BANCHI A-D" : "BANCHI E-H"));
+    bankButton.setButtonText (lang::phrase (mpc.bankGroup() == 0 ? "BANCHI A-B" : "BANCHI C-D"));
 }
 
 void MainComponent::timerCallback()
@@ -957,12 +957,13 @@ void MainComponent::paint (juce::Graphics& g)
         {
             const auto p = machine::padForCell (row, col, mpc.bankGroup());
             const auto cell = cellBounds (row, col).reduced (3);
+            const bool isSound = machine::isSoundPad (p);
             const auto& d = mpc.engine().drum (machine::drumIndex (p));
             const auto light = mpc.lightFor (p);
 
             // il colore e' quello della famiglia del suono, come sui pad del
-            // Push: grigio la batteria, celeste le voci, blu i giri, verde
-            // scuro gli accordi
+            // Push: i blu e gli azzurri per la batteria, il verde scuro per
+            // basso e accordi, i grigi per voci e giri
             const auto kind = mpc.kindFor (p);
 
             juce::Colour edge (0xff34363a);
@@ -980,7 +981,10 @@ void MainComponent::paint (juce::Graphics& g)
             g.setColour (juce::Colour (0xff121314));
             g.fillRoundedRectangle (cell.toFloat(), 3.0f);
 
-            if (d.loaded())
+            const bool filled = isSound ? d.loaded()
+                                        : light != machine::PadLight::off;
+
+            if (filled)
             {
                 g.setColour (edge.withAlpha (0.16f));
                 g.fillRoundedRectangle (cell.toFloat(), 3.0f);
@@ -989,12 +993,25 @@ void MainComponent::paint (juce::Graphics& g)
             g.setColour (edge);
             g.drawRoundedRectangle (cell.toFloat(), 3.0f, thickness);
 
+            // sotto i suoni col loro nome di banco, sopra le sequenze: li' il
+            // numero del pad non vuol dire niente, si scrive la traccia
             g.setColour (juce::Colour (0xff9b9da2));
             g.setFont (MBStudioLookAndFeel::titleFont (14.0f));
-            g.drawText (machine::bankName (p.bank) + juce::String (p.pad),
-                        cell.reduced (5), juce::Justification::bottomLeft, false);
 
-            if (d.loaded())
+            if (isSound)
+            {
+                g.drawText (machine::bankName (p.bank) + juce::String (p.pad),
+                            cell.reduced (5), juce::Justification::bottomLeft, false);
+            }
+            else
+            {
+                const int track = mpc.trackAt (row);
+                g.drawText (machine::bankName (machine::drumAt (track).bank)
+                                + juce::String (machine::drumAt (track).pad),
+                            cell.reduced (5), juce::Justification::bottomLeft, false);
+            }
+
+            if (isSound && d.loaded())
             {
                 g.setColour (juce::Colour (0xfff3f3f1));
                 g.setFont (MBStudioLookAndFeel::titleFont (12.0f));
