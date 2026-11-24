@@ -192,19 +192,28 @@ scelto: la fascia centrale e' l'onda, i campi dei rotativi si stringono sotto.
 
 ## La pagina PASSO: lo step sequencer
 
-Le quattro file in alto diventano 32 passi del suono scelto, da sinistra a
-destra e dall'alto in basso. Le quattro file in basso restano i pad dei due
-banchi di sotto, cosi' mentre si scrivono i passi si puo' ancora battere e
-cambiare suono.
+Le quattro file in alto diventano una griglia: **una traccia per fila, un passo
+per colonna**, quattro suoni e otto passi alla volta. Le quattro file in basso
+restano i pad dei due banchi di sotto, cosi' mentre si scrivono i passi si
+batte e si cambia suono senza uscire.
 
-- premere una cella in alto mette o toglie il colpo su quel passo
-- il passo scritto si accende col colore del suono, quello vuoto resta smorto,
-  e la testina che passa accende la cella come se suonasse
-- quanto vale un passo lo dice la colonna a destra dei pad: con 1/16 i 32 passi
-  sono due battute
-- se la sequenza e' piu' lunga, i tasti pagina avanti e indietro (o PASSI + e
-  PASSI -) spostano la finestra di 32 passi alla volta
+- premere una cella mette o toglie il colpo di quella traccia su quel passo, e
+  sceglie quella traccia
+- **acceso solo quello che suona**, in celeste: le celle vuote restano spente,
+  cosi' la griglia si legge al volo
+- una **barra luminosa** corre sulle colonne a tempo e da' il senso del tempo
+  che passa. Da fermi non c'e': se non scorre niente, non c'e' niente da far
+  vedere
+- i **tasti scena**, la colonna a destra sotto il tasto generale, fanno
+  scorrere le tracce: quello in cima sale di quattro, quello in fondo scende di
+  quattro, e si accendono solo quando c'e' davvero altro da vedere sopra o
+  sotto. Gli altri sei continuano a scegliere il passo, come nelle altre pagine
+- i tasti pagina avanti e indietro (o PASSI + e PASSI -) scorrono i passi
+- quanto vale un passo lo dice la colonna a destra: con 1/16 le otto colonne
+  sono mezza battuta
 - CANCELLA SUONO toglie dalla sequenza tutti i colpi del suono scelto
+
+Il display dice quali tracce e quali passi si stanno guardando.
 
 Il controllo sta dentro la macchina, non nelle superfici: la cella premuta
 viene riconosciuta li', quindi i passi si scrivono allo stesso modo dal Push,

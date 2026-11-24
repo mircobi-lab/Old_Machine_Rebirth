@@ -112,26 +112,23 @@ public:
             expect (after.startFraction < after.endFraction);
         }
 
-        beginTest ("la griglia dei passi: 32 celle nella meta' di sopra");
+        beginTest ("la griglia dei passi: quattro tracce per otto passi");
         {
             expect (machine::isStepCell (0));
             expect (machine::isStepCell (3));
             expect (! machine::isStepCell (4));
             expect (! machine::isStepCell (-1));
 
-            expectEquals (machine::stepForCell (0, 0), 0);
-            expectEquals (machine::stepForCell (0, 7), 7);
-            expectEquals (machine::stepForCell (3, 7), 31);
-            expectEquals (machine::stepForCell (4, 0), -1);
+            expectEquals (machine::stepColumns, 8);
+            expectEquals (machine::stepRows, 4);
 
-            for (int step = 0; step < machine::numSteps; ++step)
-            {
-                const auto cell = machine::cellForStep (step);
-                expect (cell.has_value());
-                expectEquals (machine::stepForCell (cell->first, cell->second), step);
-            }
+            expectEquals (machine::stepForColumn (0), 0);
+            expectEquals (machine::stepForColumn (7), 7);
+            expectEquals (machine::stepForColumn (8), -1);
 
-            expect (! machine::cellForStep (32).has_value());
+            expectEquals (machine::trackForRow (0), 0);
+            expectEquals (machine::trackForRow (3), 3);
+            expectEquals (machine::trackForRow (4), -1);
         }
 
         beginTest ("nella pagina PASSO la meta' di sopra scrive, quella di sotto suona");
@@ -141,71 +138,112 @@ public:
             press (m, page (control::Command::pageStep));
             expect (m.stepMode());
 
-            // la cella in alto a sinistra: primo passo del suono scelto
+            // la cella in alto a sinistra: primo passo della prima traccia
             const auto stepPad = machine::padForCell (0, 0, m.bankGroup());
             expectEquals (m.sequencer().eventCount(), 0);
 
             m.padDown (stepPad, 100);
             m.padUp (stepPad);
             expectEquals (m.sequencer().eventCount(), 1, "il passo non e' stato scritto");
-            expect (m.lightFor (stepPad) == machine::PadLight::loaded,
+            expect (m.lightFor (stepPad) == machine::PadLight::selected,
                     "il passo scritto non si accende");
+            expect (m.kindFor (stepPad) == sound::Kind::voce, "il passo non e' celeste");
 
-            // premuto di nuovo si toglie
+            // premuto di nuovo si toglie, e resta spento
             m.padDown (stepPad, 100);
             m.padUp (stepPad);
             expectEquals (m.sequencer().eventCount(), 0, "il passo non si toglie");
+            expect (m.lightFor (stepPad) == machine::PadLight::off,
+                    "un passo vuoto non deve restare acceso");
 
-            // la meta' di sotto resta pad: sceglie e suona, non scrive passi
+            // una fila piu' sotto e' un'altra traccia
+            const auto secondRow = machine::padForCell (1, 2, m.bankGroup());
+            m.padDown (secondRow, 100);
+            m.padUp (secondRow);
+            expectEquals (m.sequencer().eventCount(), 1);
+            expect (m.sequencer().hasHit (1, 2 * m.sequencer().quantiseTicks(), 4),
+                    "il colpo non e' sulla seconda traccia");
+
+            // la meta' di sotto resta pad: suona, non scrive passi
             const auto soundPad = machine::padForCell (7, 0, m.bankGroup());
-            const auto before = m.selectedPad();
             m.padDown (soundPad, 100);
             m.padUp (soundPad);
-            expect (! (m.selectedPad() == before) || soundPad == before,
-                    "il pad in basso non ha scelto il suono");
-            expectEquals (m.sequencer().eventCount(), 0, "il pad in basso ha scritto un passo");
+            expectEquals (m.sequencer().eventCount(), 1, "il pad in basso ha scritto un passo");
         }
 
-        beginTest ("i passi scritti a mano suonano quando la sequenza gira");
+        beginTest ("la barra del tempo corre sulle colonne");
         {
             machine::Machine m;
             m.prepare (rate);
             press (m, page (control::Command::pageStep));
+            m.sequencer().setBars (1);
 
-            // quattro passi in croce sul primo suono
-            for (int step : { 0, 4, 8, 12 })
-            {
-                const auto cell = machine::cellForStep (step);
-                const auto pad = machine::padForCell (cell->first, cell->second, m.bankGroup());
-                m.padDown (pad, 100);
-                m.padUp (pad);
-            }
+            // da ferma la barra non c'e': serve a far vedere il tempo che
+            // scorre, e da fermi non scorre niente
+            expectEquals (m.playheadColumn(), -1);
+            expect (m.lightFor (machine::padForCell (0, 0, m.bankGroup()))
+                        == machine::PadLight::off,
+                    "da ferma la griglia deve restare spenta");
 
-            expectEquals (m.sequencer().eventCount(), 4);
-
-            press (m, page (control::Command::pageSequence));
             control::Control play;
             for (const auto& c : control::buttons())
                 if (c.command == control::Command::play)
                     play = c;
             press (m, play);
 
-            // una battuta a 120: due secondi. Si conta quando esce suono.
-            juce::AudioBuffer<float> buffer (2, 128);
-            int hits = 0;
-            bool quiet = true;
-
-            for (int i = 0; i < (int) (rate * 2.0 / 128.0); ++i)
+            // mezza battuta: a 120 e' un secondo, e con il passo da un
+            // sedicesimo la barra deve essersi spostata di qualche colonna
+            juce::AudioBuffer<float> buffer (2, 256);
+            for (int i = 0; i < (int) (rate * 1.0 / 256); ++i)
             {
                 buffer.clear();
                 m.process (buffer);
-                const bool silent = buffer.getMagnitude (0, 128) < 0.01f;
-                if (quiet && ! silent)
-                    ++hits;
-                quiet = silent;
             }
 
-            expect (hits >= 3, "i passi scritti a mano non suonano: " + juce::String (hits));
+            expect (m.playheadColumn() > 0, "la barra non si e' mossa");
+            expect (m.playheadColumn() < machine::stepColumns, "la barra e' uscita dalla griglia");
+        }
+
+        beginTest ("i tasti scena fanno scorrere le tracce");
+        {
+            machine::Machine m;
+            m.prepare (rate);
+            press (m, page (control::Command::pageStep));
+
+            expectEquals (m.trackWindowStart(), 0);
+
+            control::Control top, bottom;
+            for (const auto& c : control::buttons())
+                if (c.command == control::Command::quantiseValue)
+                {
+                    if (c.index == 0) top = c;
+                    if (c.index == 7) bottom = c;
+                }
+
+            press (m, bottom);
+            expectEquals (m.trackWindowStart(), machine::stepRows, "non e' sceso");
+            expect (m.buttonLit (top), "il tasto per salire doveva accendersi");
+
+            press (m, top);
+            expectEquals (m.trackWindowStart(), 0, "non e' risalito");
+            expect (! m.buttonLit (top), "in cima il tasto per salire deve stare spento");
+
+            // in cima non si va sotto zero
+            press (m, top);
+            expectEquals (m.trackWindowStart(), 0);
+
+            // e scendendo si vedono le tracce di sotto
+            press (m, bottom);
+            press (m, bottom);
+            expectEquals (m.trackWindowStart(), machine::stepRows * 2);
+            expectEquals (m.trackAt (0), machine::stepRows * 2);
+
+            // fuori dalla pagina PASSO quei tasti tornano a scegliere il passo
+            press (m, page (control::Command::pageSound));
+            press (m, bottom);
+            expect (m.screenLines().joinIntoString (" ").contains ("1/4")
+                        || m.sequencer().quantiseTicks() == Sequencer::ticksPerBeat,
+                    "il tasto scena non sceglie piu' il passo");
         }
 
         beginTest ("la finestra dei passi si sposta avanti e indietro");

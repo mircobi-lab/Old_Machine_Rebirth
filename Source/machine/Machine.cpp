@@ -130,16 +130,50 @@ int Machine::tickForStep (int step) const
     return ((stepOffset + step) * ticks) % juce::jmax (1, seq.length());
 }
 
-bool Machine::stepPressed (int step)
+int Machine::trackAt (int row) const
 {
-    const int drum = drumIndex (selected);
+    return juce::jlimit (0, numDrums - 1, trackOffset + juce::jmax (0, row));
+}
+
+int Machine::playheadColumn() const
+{
+    // la barra serve a far vedere il tempo che scorre: da fermo non c'e'
+    if (! seq.isPlaying())
+        return -1;
+
+    const int ticks = juce::jmax (1, seq.quantiseTicks());
+    const int step = (seq.positionTicks() % juce::jmax (1, seq.length())) / ticks;
+    const int column = step - stepOffset;
+
+    return juce::isPositiveAndBelow (column, stepColumns) ? column : -1;
+}
+
+void Machine::scrollTracks (int delta)
+{
+    const int limit = numDrums - stepRows;
+    trackOffset = juce::jlimit (0, juce::jmax (0, limit), trackOffset + delta);
+
+    // la traccia in cima alla finestra diventa quella scelta: cosi' i pad
+    // battuti e il display parlano della stessa cosa
+    select (drumAt (trackOffset));
+    setMessage ("TRACCE " + juce::String (trackOffset + 1) + "-"
+                    + juce::String (trackOffset + stepRows));
+    changed();
+}
+
+bool Machine::stepPressed (int row, int column)
+{
+    const int drum = trackAt (row);
     const int ticks = seq.quantiseTicks();
     const int window = juce::jmax (1, ticks / 2 - 1);
+    const int step = stepOffset + stepForColumn (column);
 
-    const bool added = seq.toggleHit (drum, tickForStep (step), window,
+    const bool added = seq.toggleHit (drum, tickForStep (stepForColumn (column)), window,
                                       fullLevel ? 127 : 100);
 
-    setMessage ((added ? "PASSO " : "TOLTO ") + juce::String (stepOffset + step + 1));
+    select (drumAt (drum));
+    setMessage ((added ? "PASSO " : "TOLTO ") + juce::String (step + 1) + " "
+                    + sampler.drum (drum).name);
     changed();
     return added;
 }
@@ -245,7 +279,7 @@ void Machine::padDown (PadRef p, int velocity)
         if (const auto cell = cellForPad (p, group))
             if (isStepCell (cell->first))
             {
-                stepPressed (stepForCell (cell->first, cell->second));
+                stepPressed (cell->first, cell->second);
                 return;
             }
 
@@ -623,6 +657,14 @@ void Machine::command (const control::Control& c, bool down)
             break;
 
         case C::quantiseValue:
+            // nella pagina PASSO i due tasti scena in cima e in fondo fanno
+            // scorrere le tracce: gli altri sei restano il passo
+            if (stepMode() && (c.index == 0 || c.index == 7))
+            {
+                scrollTracks (c.index == 0 ? -stepRows : stepRows);
+                break;
+            }
+
             quantise = c.index;
             applyQuantiseToSequencer();
             setMessage ("PASSO " + control::quantiseName (c.index));
@@ -1147,25 +1189,23 @@ PadLight Machine::lightFor (PadRef p) const
         if (const auto cell = cellForPad (p, group))
             if (isStepCell (cell->first))
             {
-                const int step = stepForCell (cell->first, cell->second);
-                const int ticks = seq.quantiseTicks();
+                const int track = trackAt (cell->first);
+                const int ticks = juce::jmax (1, seq.quantiseTicks());
                 const int window = juce::jmax (1, ticks / 2 - 1);
-                const int tick = ((stepOffset + step) * ticks) % juce::jmax (1, seq.length());
+                const int step = stepOffset + stepForColumn (cell->second);
+                const int tick = (step * ticks) % juce::jmax (1, seq.length());
 
-                // il passo dove sta passando la testina si accende come se
-                // suonasse, anche quando e' vuoto
-                if (seq.isPlaying())
-                {
-                    const int now = seq.positionTicks() % juce::jmax (1, seq.length());
-                    if (std::abs (now - tick) <= window)
-                        return PadLight::playing;
-                }
+                // la barra del tempo: tutta la colonna sotto la testina si
+                // accende, cosi' si vede il tempo scorrere anche dove non
+                // suona niente
+                if (playheadColumn() == cell->second)
+                    return PadLight::playing;
 
-                if (tick >= seq.length())
+                if (step * ticks >= seq.length())
                     return PadLight::off;        // fuori dalla sequenza
 
-                return seq.hasHit (drumIndex (selected), tick, window) ? PadLight::loaded
-                                                                       : PadLight::empty;
+                // acceso solo quello che suona: il resto resta spento
+                return seq.hasHit (track, tick, window) ? PadLight::selected : PadLight::off;
             }
 
     if (mutes[(size_t) index])
@@ -1286,11 +1326,11 @@ Machine::WaveMarkers Machine::waveMarkers() const
 
 sound::Kind Machine::kindFor (PadRef p) const
 {
-    // nei passi si vede il colore del suono che si sta scrivendo
+    // i passi e la barra del tempo sono celesti, come ha chiesto chi suona
     if (stepMode())
         if (const auto cell = cellForPad (p, group))
             if (isStepCell (cell->first))
-                return sampler.drum (drumIndex (selected)).kind;
+                return sound::Kind::voce;
 
     return sampler.drum (drumIndex (p)).kind;
 }
@@ -1304,7 +1344,12 @@ bool Machine::buttonLit (const control::Control& c) const
         case C::pageSample: case C::pageChop: case C::pageSound: case C::pageSequence:
         case C::pageStep: case C::pageSong: case C::pageMix: case C::pageDisk:
             return c.command == page;
-        case C::quantiseValue:  return c.index == quantise;
+        case C::quantiseValue:
+            if (stepMode() && c.index == 0)
+                return trackOffset > 0;
+            if (stepMode() && c.index == 7)
+                return trackOffset + stepRows < numDrums;
+            return c.index == quantise;
         case C::fullLevel:      return fullLevel;
         case C::sixteenLevels:  return sixteenLevels;
         case C::padMute:        return muteMode;
@@ -1675,8 +1720,10 @@ juce::StringArray Machine::screenLines() const
     lines.add (lang::t ("SUONO") + "|" + (d.loaded() ? d.name : lang::t ("VUOTO")));
     if (page == control::Command::pageStep)
     {
+        lines.add (lang::t ("TRACCE") + "|" + juce::String (trackOffset + 1) + "-"
+                       + juce::String (trackOffset + stepRows));
         lines.add (lang::t ("PASSI") + "|" + juce::String (stepOffset + 1) + "-"
-                       + juce::String (stepOffset + numSteps));
+                       + juce::String (stepOffset + stepColumns));
         lines.add (lang::t ("PASSO") + "|" + control::quantiseName (quantise));
         lines.add (lang::t ("POSIZIONE") + "|" + juce::String (seq.positionBar()) + "."
                        + juce::String (seq.positionBeat()));

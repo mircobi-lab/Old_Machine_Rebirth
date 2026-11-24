@@ -178,6 +178,7 @@ const Row table[] =
     { "SEQ",          "SEQ",          "SEQ" },
     { "FAMIGLIA",     "FAMILY",       "FAMILLE" },
     { "PASSI",        "STEPS",        "PAS" },
+    { "TRACCE",       "TRACKS",       "PISTES" },
     { "MODO",         "MODE",         "MODE" },
     { "BRANO",        "SONG",         "MORCEAU" },
     { "COMPRESSORE",  "COMPRESSOR",   "COMPRESSEUR" },

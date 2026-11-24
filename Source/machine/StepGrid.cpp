@@ -10,20 +10,14 @@ bool isStepCell (int rowFromTop)
     return rowFromTop >= 0 && rowFromTop < stepRows;
 }
 
-int stepForCell (int rowFromTop, int columnFromLeft)
+int stepForColumn (int columnFromLeft)
 {
-    if (! isStepCell (rowFromTop) || ! juce::isPositiveAndBelow (columnFromLeft, stepColumns))
-        return -1;
-
-    return rowFromTop * stepColumns + columnFromLeft;
+    return juce::isPositiveAndBelow (columnFromLeft, stepColumns) ? columnFromLeft : -1;
 }
 
-std::optional<std::pair<int, int>> cellForStep (int step)
+int trackForRow (int rowFromTop)
 {
-    if (! juce::isPositiveAndBelow (step, numSteps))
-        return {};
-
-    return std::make_pair (step / stepColumns, step % stepColumns);
+    return isStepCell (rowFromTop) ? rowFromTop : -1;
 }
 
 } // namespace machine

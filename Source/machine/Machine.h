@@ -47,6 +47,13 @@ public:
     // scelto, quella di sotto resta pad.
     bool stepMode() const { return page == control::Command::pageStep; }
     int stepWindowStart() const { return stepOffset; }
+    int trackWindowStart() const { return trackOffset; }
+    void scrollTracks (int delta);
+
+    // Quale traccia sta su quella fila, e su quale colonna corre adesso la
+    // barra del tempo (-1 se e' fuori dalla finestra che si vede).
+    int trackAt (int row) const;
+    int playheadColumn() const;
 
     // Quello che serve per disegnare l'onda del campione sul display: i segni,
     // non i campioni. Chi disegna chiede il suono al campionatore una volta
@@ -193,7 +200,7 @@ private:
     void moveSelection (int rows, int columns);
     void applyQuantiseToSequencer();
     int tickForStep (int step) const;
-    bool stepPressed (int step);
+    bool stepPressed (int row, int column);
     void setMessage (juce::String);
     void changed();
 
@@ -207,7 +214,8 @@ private:
     bool soloMode = false;
     bool resampling = false;            // il registratore prende l'uscita, non l'ingresso
     bool padsIntoSequence = true;       // SUONA: i pad finiscono nella sequenza o no
-    int stepOffset = 0;                 // da che passo comincia la finestra di 32
+    int stepOffset = 0;                 // da che passo comincia la finestra
+    int trackOffset = 0;                // da che traccia comincia la finestra
 
     PadRef selected { 0, 1 };
     int group = 0;                      // 0 = A..D, 1 = E..H
