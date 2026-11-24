@@ -33,6 +33,10 @@ Result loadProgram (const juce::File&, machine::Machine&);
 // Il programma delle macchine vecchie, 2000 e 2000XL.
 Result loadOldProgram (const juce::File& pgm, machine::Machine&);
 
+// Il programma dei modelli 1000, 2500 e 500: stesso nome .pgm ma formato
+// tutto diverso, con un blocco da 164 byte per pad.
+Result loadThousandProgram (const juce::File& pgm, machine::Machine&);
+
 // I campioni delle macchine vecchie non sono wav: sono file .SND, cioe'
 // sedici bit grezzi dietro a un'intestazione di quarantadue byte.
 bool readSnd (const juce::File&, juce::AudioBuffer<float>& destination, double& sampleRate);

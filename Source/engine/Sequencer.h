@@ -100,6 +100,7 @@ public:
     void setBars (int);
     int eventCount() const;
     int eventCount (int sequence) const;
+    Event eventAt (int index) const;
 
     double positionInBeats() const;
     int positionBar() const;

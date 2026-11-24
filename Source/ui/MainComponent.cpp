@@ -1,5 +1,6 @@
 #include "MainComponent.h"
 
+#include "machine/MidiFileIo.h"
 #include "machine/MpcProgram.h"
 #include "push2/Push2Protocol.h"
 
@@ -99,6 +100,52 @@ MainComponent::MainComponent()
     mpc.onOpenScene = [this] { chooseSceneToOpen(); };
     mpc.onToLibrary = [this] { putSelectedInLibrary(); };
     mpc.onBrowseLibrary = [this] { browseLibrary(); };
+
+    mpc.onOpenMidi = [this]
+    {
+        chooser = std::make_unique<juce::FileChooser> (
+            lang::t ("APRI MIDI"),
+            juce::File::getSpecialLocation (juce::File::userMusicDirectory), "*.mid;*.midi");
+
+        chooser->launchAsync (juce::FileBrowserComponent::openMode
+                                  | juce::FileBrowserComponent::canSelectFiles,
+                              [this] (const juce::FileChooser& fc)
+        {
+            const auto file = fc.getResult();
+            if (file == juce::File())
+                return;
+
+            const auto result = midifile::import (file, mpc);
+            mpc.setMessageFromOutside (result.ok()
+                                           ? juce::String (result.notes) + " " + lang::t ("COLPI")
+                                           : result.error);
+            refreshSurfaces();
+            repaint();
+        });
+    };
+
+    mpc.onSaveMidi = [this]
+    {
+        auto folder = library::root();
+        folder.createDirectory();
+
+        chooser = std::make_unique<juce::FileChooser> (
+            lang::t ("SALVA MIDI"),
+            folder.getChildFile ("sequenza.mid"), "*.mid");
+
+        chooser->launchAsync (juce::FileBrowserComponent::saveMode
+                                  | juce::FileBrowserComponent::canSelectFiles
+                                  | juce::FileBrowserComponent::warnAboutOverwriting,
+                              [this] (const juce::FileChooser& fc)
+        {
+            const auto file = fc.getResult();
+            if (file == juce::File())
+                return;
+
+            mpc.setMessageFromOutside (midifile::exportSequence (file, mpc)
+                                           ? "SALVATO" : "NON CI RIESCO");
+        });
+    };
 
     mpc.onChanged = [this]
     {
@@ -740,7 +787,7 @@ bool MainComponent::isInterestedInFileDrag (const juce::StringArray& files)
 
         // i suoni, i programmi della macchina vera, e le cartelle: un kit si
         // trascina dentro tutto intero
-        if (f.isDirectory() || f.hasFileExtension ("wav;aif;aiff;flac;mp3;ogg;xpm;pgm;snd"))
+        if (f.isDirectory() || f.hasFileExtension ("wav;aif;aiff;flac;mp3;ogg;xpm;pgm;snd;mid;midi"))
             return true;
     }
 
@@ -774,6 +821,18 @@ void MainComponent::loadDropped (const juce::File& file, machine::PadRef& target
     if (file.hasFileExtension ("xpm;pgm"))
     {
         loadProgram (file);
+        return;
+    }
+
+    if (file.hasFileExtension ("mid;midi"))
+    {
+        const auto result = midifile::import (file, mpc);
+
+        mpc.setMessageFromOutside (result.ok()
+                                       ? juce::String (result.notes) + " " + lang::t ("COLPI")
+                                             + "  " + juce::String (result.bars) + " "
+                                             + lang::t ("BATTUTE")
+                                       : result.error);
         return;
     }
 
@@ -838,11 +897,19 @@ void MainComponent::loadProgram (const juce::File& file)
         return;
     }
 
+    // si dice com'e' andata: il nome del kit, quanti pad, e i primi nomi che
+    // non si sono trovati, perche' sapere quale manca serve a trovarlo
     juce::String message;
-    message << result.padsLoaded << " PAD";
+    message << result.programName.toUpperCase() << "  " << result.padsLoaded << " PAD";
 
     if (! result.missing.isEmpty())
-        message << "  " << result.missing.size() << " " + lang::t ("MANCANTI");
+    {
+        message << "  " << result.missing.size() << " " << lang::t ("MANCANTI") << ": "
+                << result.missing[0];
+
+        if (result.missing.size() > 1)
+            message << "...";
+    }
 
     mpc.setMessageFromOutside (message);
     refreshSurfaces();

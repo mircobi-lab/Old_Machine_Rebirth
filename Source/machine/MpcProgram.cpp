@@ -236,6 +236,10 @@ Result loadOldProgram (const juce::File& pgm, machine::Machine& m)
 
     const auto folder = pgm.getParentDirectory();
 
+    // un kit prende il posto del kit: i 64 pad dei banchi da A a D si
+    // svuotano, quelli da E a H restano come sono
+    m.clearPads (0, 64);
+
     for (int pad = 0; pad < 64 && pad < machine::numDrums; ++pad)
     {
         int note = bytes[padMapAt + pad];
@@ -279,6 +283,120 @@ Result loadOldProgram (const juce::File& pgm, machine::Machine& m)
     return result;
 }
 
+// ============================================================================
+// Il programma dei modelli 1000, 2500 e 500.
+//
+// La struttura e' pubblicata per intero (Stephen Norum, mybunnyhug.org), e
+// dice: intestazione con la dicitura "MPC1000 PGM 1.00", poi 64 blocchi da
+// 0xA4 byte, uno per pad. Dentro ogni blocco stanno quattro strati da 0x18
+// byte col nome del campione e il suo volume, e in fondo i parametri del pad:
+// gruppo di taglio, volume, panorama, filtro.
+// ============================================================================
+Result loadThousandProgram (const juce::File& pgm, machine::Machine& m)
+{
+    Result result;
+
+    juce::MemoryBlock data;
+    if (! pgm.loadFileAsData (data) || data.getSize() < 0x2918 + 64)
+    {
+        result.error = "NON LEGGO QUEL FILE";
+        return result;
+    }
+
+    const auto* bytes = (const std::uint8_t*) data.getData();
+    const int size = (int) data.getSize();
+
+    result.programName = pgm.getFileNameWithoutExtension();
+
+    const auto folder = pgm.getParentDirectory();
+
+    m.clearPads (0, 64);
+
+    // i blocchi dei pad cominciano dopo l'intestazione, a 0x18: lo conferma
+    // la sezione MIDI, che cade a 0x2918 proprio perche' 0x18 + 64 * 0xA4
+    constexpr int padSection = 0x18;
+    constexpr int padBlock = 0xA4;
+    constexpr int layerBlock = 0x18;
+
+    for (int pad = 0; pad < 64 && pad < machine::numDrums; ++pad)
+    {
+        const int base = padSection + pad * padBlock;
+        if (base + padBlock > size)
+            break;
+
+        // il primo strato pieno: gli altri sono sovrapposizioni, e noi
+        // suoniamo un campione per pad
+        juce::String name;
+        int layerAt = -1;
+
+        for (int layer = 0; layer < 4; ++layer)
+        {
+            const int at = base + layer * layerBlock;
+            const auto candidate = juce::String::fromUTF8 ((const char*) bytes + at, 16).trim();
+
+            if (candidate.isNotEmpty())
+            {
+                name = candidate;
+                layerAt = at;
+                break;
+            }
+        }
+
+        if (name.isEmpty())
+            continue;
+
+        const auto file = findSample (folder, name);
+        if (file == juce::File() || ! loadInto (m, pad, file, name))
+        {
+            result.missing.add (name);
+            continue;
+        }
+
+        auto& drum = m.engine().drum (pad);
+        drum.name = name.toUpperCase();
+        drum.kind = sound::guessFromName (drum.name);
+
+        // volume e panorama del pad stanno in fondo al blocco
+        const int mixerLevel = bytes[base + 0x8F];
+        const int mixerPan = bytes[base + 0x90];
+
+        if (mixerLevel <= 100)
+            drum.level = juce::jlimit (0.0f, 1.0f, (float) mixerLevel / 100.0f);
+        if (mixerPan <= 100)
+            drum.pan = juce::jlimit (-1.0f, 1.0f, (float) (mixerPan - 50) / 50.0f);
+
+        const int muteGroup = (std::int8_t) bytes[base + 0x63];
+        if (muteGroup > 0)
+            drum.muteGroup = muteGroup;
+
+        // l'accordatura e' in centesimi di semitono, con segno
+        if (layerAt >= 0 && layerAt + 0x16 < size)
+        {
+            const int cents = (std::int16_t) (bytes[layerAt + 0x14] | (bytes[layerAt + 0x15] << 8));
+            drum.tuneSemitones = juce::jlimit (-24, 24, cents / 100);
+
+            // 0 suona tutto, 1 suona finche' si tiene premuto
+            drum.playMode = bytes[layerAt + 0x16] == 1 ? PlayMode::tenuto : PlayMode::unaVolta;
+        }
+
+        // il filtro: tipo e frequenza diventano la nostra manopola sola
+        const int filterType = (std::int8_t) bytes[base + 0x71];
+        const int filterFreq = bytes[base + 0x72];
+
+        if (filterType == 1 && filterFreq <= 100)
+            drum.filter = juce::jlimit (0.0f, 1.0f, (float) (100 - filterFreq) / 100.0f);
+        else if (filterType == 3 && filterFreq <= 100)
+            drum.filter = -juce::jlimit (0.0f, 1.0f, (float) filterFreq / 100.0f);
+
+        ++result.padsLoaded;
+    }
+
+    if (result.padsLoaded == 0 && result.error.isEmpty())
+        result.error = "NESSUN CAMPIONE TROVATO";
+
+    return result;
+}
+
 Result loadProgram (const juce::File& file, machine::Machine& m)
 {
     Result result;
@@ -289,15 +407,21 @@ Result loadProgram (const juce::File& file, machine::Machine& m)
         return result;
     }
 
-    // il vecchio formato si riconosce dai primi due byte, non dal nome
+    // Il formato si riconosce da quello che c'e' dentro, non dal nome: i
+    // modelli 1000, 2500 e 500 si firmano con una dicitura in chiaro, il 2000
+    // e il 2000XL con due byte in testa.
     {
         juce::FileInputStream stream (file);
         if (stream.openedOk())
         {
-            const auto first = (std::uint8_t) stream.readByte();
-            const auto second = (std::uint8_t) stream.readByte();
-            if (first == 0x07 && second == 0x04)
+            char head[20] = {};
+            const int read = stream.read (head, 20);
+
+            if (read >= 2 && (std::uint8_t) head[0] == 0x07 && (std::uint8_t) head[1] == 0x04)
                 return loadOldProgram (file, m);
+
+            if (read >= 20 && juce::String::fromUTF8 (head + 4, 16).startsWith ("MPC1000 PGM"))
+                return loadThousandProgram (file, m);
         }
     }
 
@@ -324,6 +448,8 @@ Result loadProgram (const juce::File& file, machine::Machine& m)
     }
 
     const auto folder = xpm.getParentDirectory();
+
+    m.clearPads (0, 64);
 
     for (int i = 0; i < instruments.size() && i < machine::numDrums; ++i)
     {

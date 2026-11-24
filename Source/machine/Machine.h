@@ -158,8 +158,13 @@ public:
     // in giro i suoni di quella di prima.
     void clearAllPads();
 
+    // Svuota un pezzo di pad: caricare un kit intero svuota i 64 di prima,
+    // perche' un kit prende il posto di un kit.
+    void clearPads (int firstDrum, int count);
+
     // Il volume generale, come lo manda la striscia del Push.
     void setMasterGain (float);
+    void setTempoFromOutside (double);
     float masterVolume() const { return masterGain; }
 
     bool padsRecord() const { return padsIntoSequence; }
@@ -170,6 +175,7 @@ public:
     std::function<void()> onChopRequested;    // spacca un brano in fette
     std::function<void()> onFillRequested;    // chiedi un file lungo da tagliare a fette uguali
     std::function<void()> onSaveScene, onOpenScene, onToLibrary, onBrowseLibrary;
+    std::function<void()> onOpenMidi, onSaveMidi;
     std::function<void()> onSetup;             // apri la scheda audio
     std::function<void (int note, int velocity)> onPadPlayed;   // verso il MIDI di fuori
     std::function<void (cleaner::Preset)> onCleanRequested;  // pulisci il campione del pad

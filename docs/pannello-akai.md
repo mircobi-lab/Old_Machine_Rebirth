@@ -301,10 +301,38 @@ dicono che nota fa ogni pad. La prova che la lettura e' giusta: i campioni
 cadono esattamente dove li mette lo standard General MIDI per la batteria,
 cassa sul 36, rullante sul 38, charleston chiuso sul 42.
 
-Quello che ancora non leggiamo: i programmi dei modelli 1000 e 2500 (stesso
-nome `.pgm` ma formato diverso), quelli dell'MPC3000, e i progetti interi
+- **Il programma dei modelli 1000, 2500 e 500** e' un terzo formato, sempre
+  chiamato `.pgm`: si firma con la dicitura "MPC1000 PGM 1.00" e tiene 64
+  blocchi da 164 byte, uno per pad, con quattro strati ciascuno. Di ogni pad
+  prendiamo il primo strato pieno, il volume, il panorama, il gruppo di
+  taglio, l'accordatura (che li' e' in centesimi di semitono), il modo di
+  suonare e il filtro: passa basso e passa alto diventano la nostra manopola
+  sola. La struttura e' quella pubblicata da Stephen Norum su mybunnyhug.org.
+
+Quale dei tre formati sia, si capisce da quello che c'e' dentro e non dal
+nome: i modelli 1000 e 2500 si firmano in chiaro, il 2000 e il 2000XL con due
+byte in testa. Un file chiamato male si carica lo stesso.
+
+Caricare un kit **svuota i 64 pad dei banchi da A a D**, perche' un kit prende
+il posto di un kit: senza quello resterebbero sotto i suoni di prima, mescolati
+ai nuovi. I banchi da E a H restano come sono. Sul display compare il nome del
+kit, quanti pad sono entrati e, se manca qualche campione, quanti sono e come
+si chiama il primo: sapere quale manca e' l'unico modo per andarlo a cercare.
+
+Quello che ancora non leggiamo: i programmi dell'MPC3000 e i progetti interi
 (`.xpj`). Dentro un progetto, pero', i programmi e i campioni ci sono e si
 caricano a mano.
+
+## I file MIDI
+
+Un `.mid` trascinato dentro entra nella sequenza di adesso: le note vanno sui
+pad col conto delle macchine vere, la 35 sul primo pad e la 98 sul
+sessantaquattresimo, quindi un file uscito da una di quelle macchine ritrova i
+suoi pad senza toccare niente. Il tempo scritto nel file diventa il tempo della
+macchina, e le battute si allungano quanto basta a contenerlo.
+
+Nella pagina DISCO ci sono APRI MIDI e SALVA MIDI. Quello che si salva e' la
+sequenza di adesso, col tempo in testa, sul canale 16.
 
 I nomi dei campi nel programma cambiano da una versione all'altra della
 macchina, quindi il lettore prende quello che riconosce e lascia stare il

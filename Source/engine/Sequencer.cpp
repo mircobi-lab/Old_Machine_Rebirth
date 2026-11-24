@@ -33,6 +33,15 @@ int Sequencer::eventCount (int sequence) const
     return sequences[sequence].count.load();
 }
 
+Sequencer::Event Sequencer::eventAt (int index) const
+{
+    const auto& sequence = sequences[current];
+    if (! juce::isPositiveAndBelow (index, sequence.count.load()))
+        return {};
+
+    return sequence.events[(size_t) index];
+}
+
 int Sequencer::lengthInTicks() const
 {
     return juce::jmax (ticksPerBar, bars() * ticksPerBar);

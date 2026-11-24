@@ -572,6 +572,8 @@ void Machine::command (const control::Control& c, bool down)
                 else if (c.index == 1 && onOpenScene)   onOpenScene();
                 else if (c.index == 2 && onToLibrary)   onToLibrary();
                 else if (c.index == 3 && onBrowseLibrary) onBrowseLibrary();
+                else if (c.index == 4 && onOpenMidi)    onOpenMidi();
+                else if (c.index == 5 && onSaveMidi)    onSaveMidi();
                 else setMessage ("");
             }
             else if (page == C::pageChop)
@@ -1175,6 +1177,13 @@ PadLight Machine::lightFor (PadRef p) const
     return sampler.drum (index).loaded() ? PadLight::loaded : PadLight::empty;
 }
 
+void Machine::setTempoFromOutside (double newTempo)
+{
+    bpm = juce::jlimit (30.0, 300.0, newTempo);
+    tempoAtomic.store (bpm);
+    changed();
+}
+
 void Machine::setMasterGain (float gain)
 {
     masterGain = juce::jlimit (0.0f, 1.0f, gain);
@@ -1455,6 +1464,8 @@ juce::StringArray Machine::softKeyLabels() const
         labels.set (1, lang::t ("APRI SCENA"));
         labels.set (2, lang::t ("IN LIBRERIA"));
         labels.set (3, lang::t ("LIBRERIA"));
+        labels.set (4, lang::t ("APRI MIDI"));
+        labels.set (5, lang::t ("SALVA MIDI"));
     }
     else if (page == control::Command::pageChop)
     {
@@ -1535,6 +1546,15 @@ void Machine::restore (const State& s)
     setBankGroup (juce::jlimit (0, 1, s.bankGroup));
 
     select (drumAt (juce::jlimit (0, numDrums - 1, s.selectedPad)));
+
+    changed();
+}
+
+void Machine::clearPads (int firstDrum, int count)
+{
+    for (int i = firstDrum; i < firstDrum + count && i < numDrums; ++i)
+        if (i >= 0)
+            sampler.drum (i) = Drum();
 
     changed();
 }

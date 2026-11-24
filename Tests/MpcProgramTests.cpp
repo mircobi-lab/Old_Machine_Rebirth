@@ -292,6 +292,108 @@ public:
             expect (result.error.isNotEmpty());
         }
 
+        beginTest ("un programma dei modelli 1000 e 2500 si carica");
+        {
+            auto folder = temp.getChildFile ("mille");
+            folder.createDirectory();
+
+            const juce::StringArray names { "BD_MILLE", "SD_MILLE", "HH_MILLE" };
+            for (const auto& n : names)
+                writeWav (folder.getChildFile (n + ".wav"));
+
+            // La struttura pubblicata: intestazione con la dicitura, poi 64
+            // blocchi da 0xA4 byte, uno per pad, con quattro strati da 0x18.
+            juce::MemoryBlock data;
+            data.setSize (0x2A04, true);
+            auto* b = (std::uint8_t*) data.getData();
+
+            b[0] = 0x04;                       // la dimensione, in fondo alla parola
+            b[1] = 0x2A;
+            memcpy (b + 4, "MPC1000 PGM 1.00", 16);
+
+            const int padSection = 0x18;      // i pad cominciano dopo l'intestazione
+
+            const auto putPad = [b, &names, padSection] (int pad, int which, int level, int pan,
+                                                         int muteGroup, int cents, int playMode)
+            {
+                const int base = padSection + pad * 0xA4;
+                const auto name = names[which];
+                memcpy (b + base, name.toRawUTF8(), (size_t) name.length());
+
+                b[base + 0x14] = (std::uint8_t) (cents & 0xff);          // accordatura
+                b[base + 0x15] = (std::uint8_t) ((cents >> 8) & 0xff);
+                b[base + 0x16] = (std::uint8_t) playMode;
+                b[base + 0x63] = (std::uint8_t) muteGroup;
+                b[base + 0x8F] = (std::uint8_t) level;
+                b[base + 0x90] = (std::uint8_t) pan;
+            };
+
+            putPad (0, 0, 100, 50, 0, 0, 0);                 // cassa, dritta
+            putPad (1, 1, 60, 25, 2, -1200, 1);              // rullante piano, a sinistra,
+                                                             // un'ottava sotto, tenuto
+            putPad (2, 2, 100, 50, 1, 0, 0);
+
+            // un filtro passa basso sul terzo pad
+            b[padSection + 2 * 0xA4 + 0x71] = 1;
+            b[padSection + 2 * 0xA4 + 0x72] = 40;
+
+            const auto file = folder.getChildFile ("MILLE.PGM");
+            file.replaceWithData (data.getData(), data.getSize());
+
+            machine::Machine m;
+            m.prepare (44100.0);
+
+            const auto result = mpc::loadProgram (file, m);   // riconosciuto dalla dicitura
+
+            expect (result.ok(), "non ha caricato: " + result.error);
+            expectEquals (result.padsLoaded, 3);
+
+            expectEquals (m.engine().drum (0).name, juce::String ("BD_MILLE"));
+            expectEquals (m.engine().drum (1).name, juce::String ("SD_MILLE"));
+            expectEquals (m.engine().drum (2).name, juce::String ("HH_MILLE"));
+            expect (! m.engine().drum (3).loaded());
+
+            const auto& snare = m.engine().drum (1);
+            expectWithinAbsoluteError (snare.level, 0.6f, 0.02f);
+            expectWithinAbsoluteError (snare.pan, -0.5f, 0.02f);
+            expectEquals (snare.muteGroup, 2);
+            expectEquals (snare.tuneSemitones, -12, "l'accordatura e' in centesimi");
+            expect (snare.playMode == PlayMode::tenuto);
+
+            // il filtro passa basso diventa la nostra manopola girata a destra
+            expect (m.engine().drum (2).filter > 0.5f,
+                    "il filtro non e' arrivato: " + juce::String (m.engine().drum (2).filter));
+        }
+
+        beginTest ("caricare un kit svuota i pad di prima");
+        {
+            auto folder = temp.getChildFile ("ricambio");
+            folder.createDirectory();
+            writeWav (folder.getChildFile ("SOLO_UNO.wav"));
+
+            juce::MemoryBlock data;
+            data.setSize (0x2A04, true);
+            auto* b = (std::uint8_t*) data.getData();
+            b[0] = 0x04;
+            b[1] = 0x2A;
+            memcpy (b + 4, "MPC1000 PGM 1.00", 16);
+            memcpy (b + 0x18, "SOLO_UNO", 8);      // il primo pad
+
+            const auto file = folder.getChildFile ("RICAMBIO.PGM");
+            file.replaceWithData (data.getData(), data.getSize());
+
+            machine::Machine m;
+            m.prepare (44100.0);
+            expect (m.engine().loadedCount() > 1, "il kit di partenza non c'e'");
+
+            const auto result = mpc::loadProgram (file, m);
+            expect (result.ok(), result.error);
+
+            // il kit di partenza non deve restare sotto quello nuovo
+            expectEquals (m.engine().loadedCount(), 1, "sono rimasti i suoni di prima");
+            expectEquals (m.engine().drum (0).name, juce::String ("SOLO_UNO"));
+        }
+
         beginTest ("i campioni .SND delle macchine vecchie si leggono");
         {
             // l'intestazione del formato: 01 04, il nome, i canali, quanti
