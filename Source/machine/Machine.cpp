@@ -194,6 +194,16 @@ void Machine::hit (PadRef p, int velocity)
 
     // nella sequenza finisce il colpo vero, non le pressioni per mutare,
     // cancellare o copiare
+    // Nella sequenza finisce il colpo vero, non le pressioni per mutare,
+    // cancellare o copiare, e solo se i pad ci devono scrivere.
+    if (padsIntoSequence)
+        seq.recordHit (index, velocity);
+
+    // e il colpo esce anche sul MIDI, per chi ha altre macchine attaccate
+    if (onPadPlayed)
+        if (const auto cell = cellForPad (p, group))
+            onPadPlayed (push2::padNote (cell->first, cell->second), velocity);
+
     int playIndex = index;
     float gain = fullLevel ? 1.0f : juce::jlimit (0.0f, 1.0f, (float) velocity / 127.0f);
 
