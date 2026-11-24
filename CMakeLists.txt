@@ -64,6 +64,7 @@ set(REBIRTH_CORE_SOURCES
     Source/engine/Slicer.cpp
     Source/engine/Warp.cpp
     Source/machine/Library.cpp
+    Source/machine/MpcProgram.cpp
     Source/machine/StepGrid.cpp
     Source/ui/Lang.cpp
     Source/engine/Cleaner.cpp

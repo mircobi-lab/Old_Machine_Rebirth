@@ -1,5 +1,6 @@
 #include "MainComponent.h"
 
+#include "machine/MpcProgram.h"
 #include "push2/Push2Protocol.h"
 
 #include <BinaryData.h>
@@ -445,9 +446,10 @@ void MainComponent::loadOntoSelected()
     const auto target = mpc.selectedPad();
 
     chooser = std::make_unique<juce::FileChooser> (
-        "Scegli un suono per il pad " + machine::bankName (target.bank) + juce::String (target.pad),
+        "Scegli un suono o un programma per il pad "
+            + machine::bankName (target.bank) + juce::String (target.pad),
         juce::File::getSpecialLocation (juce::File::userMusicDirectory),
-        "*.wav;*.aif;*.aiff;*.flac;*.mp3");
+        "*.wav;*.aif;*.aiff;*.flac;*.mp3;*.xpm");
 
     chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                           [this, target] (const juce::FileChooser& fc)
@@ -456,7 +458,10 @@ void MainComponent::loadOntoSelected()
         if (file == juce::File())
             return;
 
-        if (mpc.engine().loadFile (machine::drumIndex (target), file))
+        // un programma porta con se' tutto il kit, un suono va sul pad scelto
+        if (file.hasFileExtension ("xpm"))
+            loadProgram (file);
+        else if (mpc.engine().loadFile (machine::drumIndex (target), file))
             refreshSurfaces();
 
         repaint();
@@ -634,7 +639,7 @@ void MainComponent::putSelectedInLibrary()
 void MainComponent::browseLibrary()
 {
     chooser = std::make_unique<juce::FileChooser> (lang::t ("LIBRERIA"), library::samplesFolder(),
-                                                   "*.wav;*.aif;*.aiff;*.flac;*.mp3");
+                                                   "*.wav;*.aif;*.aiff;*.flac;*.mp3;*.xpm");
 
     chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                           [this] (const juce::FileChooser& fc)
@@ -643,7 +648,9 @@ void MainComponent::browseLibrary()
         if (file == juce::File())
             return;
 
-        if (mpc.engine().loadFile (mpc.selectedDrumIndex(), file))
+        if (file.hasFileExtension ("xpm"))
+            loadProgram (file);
+        else if (mpc.engine().loadFile (mpc.selectedDrumIndex(), file))
             mpc.setMessageFromOutside (file.getFileNameWithoutExtension().toUpperCase());
 
         refreshSurfaces();
@@ -727,9 +734,16 @@ void MainComponent::runClean (cleaner::Preset preset)
 
 bool MainComponent::isInterestedInFileDrag (const juce::StringArray& files)
 {
-    for (const auto& f : files)
-        if (juce::File (f).hasFileExtension ("wav;aif;aiff;flac;mp3;ogg"))
+    for (const auto& name : files)
+    {
+        const juce::File f (name);
+
+        // i suoni, i programmi della macchina vera, e le cartelle: un kit si
+        // trascina dentro tutto intero
+        if (f.isDirectory() || f.hasFileExtension ("wav;aif;aiff;flac;mp3;ogg;xpm"))
             return true;
+    }
+
     return false;
 }
 
@@ -740,19 +754,85 @@ void MainComponent::filesDropped (const juce::StringArray& files, int x, int y)
     auto target = padAt ({ x, y }).value_or (mpc.selectedPad());
 
     for (const auto& name : files)
-    {
-        const juce::File file (name);
-        if (! file.existsAsFile())
-            continue;
+        loadDropped (juce::File (name), target);
 
+    refreshSurfaces();
+    repaint();
+}
+
+void MainComponent::loadDropped (const juce::File& file, machine::PadRef& target)
+{
+    if (file.isDirectory())
+    {
+        loadFolder (file, target);
+        return;
+    }
+
+    if (! file.existsAsFile())
+        return;
+
+    if (file.hasFileExtension ("xpm"))
+    {
+        loadProgram (file);
+        return;
+    }
+
+    const int index = machine::drumIndex (target);
+    mpc.engine().loadFile (index, file);
+
+    if (index + 1 < machine::numDrums)
+        target = machine::drumAt (index + 1);
+}
+
+void MainComponent::loadFolder (const juce::File& folder, machine::PadRef& target)
+{
+    // Una cartella: se dentro c'e' un programma si carica quello, perche' sa
+    // dove va ogni suono. Se no si mettono i wav sui pad in ordine di nome.
+    for (const auto& entry : juce::RangedDirectoryIterator (folder, false, "*.xpm"))
+    {
+        loadProgram (entry.getFile());
+        return;
+    }
+
+    juce::Array<juce::File> sounds;
+    for (const auto& entry : juce::RangedDirectoryIterator (folder, false,
+                                                            "*.wav;*.WAV;*.aif;*.aiff;*.flac"))
+        sounds.add (entry.getFile());
+
+    sounds.sort();
+
+    for (const auto& file : sounds)
+    {
         const int index = machine::drumIndex (target);
         mpc.engine().loadFile (index, file);
 
         if (index + 1 >= machine::numDrums)
             break;
+
         target = machine::drumAt (index + 1);
     }
 
+    mpc.setMessageFromOutside (juce::String (sounds.size()) + " " + lang::t ("SUONI"));
+}
+
+void MainComponent::loadProgram (const juce::File& file)
+{
+    const auto result = mpc::loadProgram (file, mpc);
+
+    if (! result.ok())
+    {
+        mpc.setMessageFromOutside (result.error.isNotEmpty() ? result.error
+                                                             : juce::String ("NON CI RIESCO"));
+        return;
+    }
+
+    juce::String message;
+    message << result.padsLoaded << " PAD";
+
+    if (! result.missing.isEmpty())
+        message << "  " << result.missing.size() << " " + lang::t ("MANCANTI");
+
+    mpc.setMessageFromOutside (message);
     refreshSurfaces();
     repaint();
 }

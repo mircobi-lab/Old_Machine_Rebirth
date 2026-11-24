@@ -267,3 +267,30 @@ griglia funziona senza configurare niente, e quello che si batte esce sul
 canale 16, come i suoni di batteria della macchina vera.
 
 **Tutti suonano** (UNMUTE ALL). SHIFT con MUTE, o il tasto nella pagina MIX.
+
+## Caricare i kit della macchina vera
+
+I pacchetti per MPC sono wav normali piu' un file di programma che dice quale
+campione va su quale pad.
+
+- **I wav** si caricano gia': uno alla volta sul pad scelto, o tanti insieme
+  trascinandoli, e riempiono i pad uno dopo l'altro.
+- **Una cartella** trascinata dentro: se contiene un programma si carica
+  quello, altrimenti i wav vanno sui pad in ordine di nome.
+- **Il programma (.xpm)** si legge: e' XML, e dentro ci sono gli strumenti, uno
+  per pad, con il nome del campione e i parametri. Lo strumento numero N
+  finisce sul pad numero N, e il wav si cerca nella stessa cartella, in
+  `Samples/`, un piano sopra, e poi dappertutto sotto la cartella del
+  programma. Di ogni pad si prendono volume, panorama, accordatura, gruppo di
+  taglio, modo di suonare e i punti di inizio e fine, quando ci sono.
+
+Quello che non leggiamo: i programmi delle macchine piu' vecchie (`.pgm` dei
+modelli 1000 e 2500, i `.snd` dell'MPC60 e dell'MPC3000) e i progetti interi
+(`.xpj`). Dentro un progetto, pero', i programmi `.xpm` e i wav ci sono e si
+caricano a mano.
+
+I nomi dei campi nel programma cambiano da una versione all'altra della
+macchina, quindi il lettore prende quello che riconosce e lascia stare il
+resto: un kit si carica anche se un parametro ha un altro nome, e i campioni
+nominati ma non trovati vengono contati e detti sul display invece di far
+fallire tutto il caricamento.

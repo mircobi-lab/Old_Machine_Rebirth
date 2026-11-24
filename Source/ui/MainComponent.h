@@ -51,6 +51,9 @@ private:
     void runChop (const juce::File&);
     void runClean (cleaner::Preset);
     void chooseFileToFill();
+    void loadDropped (const juce::File&, machine::PadRef& target);
+    void loadProgram (const juce::File&);
+    void loadFolder (const juce::File&, machine::PadRef& target);
     void askSceneName();
     void saveSceneAs (const juce::String& name);
     void chooseSceneToOpen();
