@@ -180,6 +180,155 @@ public:
             expectEquals (m.engine().drum (0).name, juce::String ("TOM"));
         }
 
+        beginTest ("un programma delle macchine vecchie (.pgm) mette i pad al posto giusto");
+        {
+            auto folder = temp.getChildFile ("vecchio-kit");
+            folder.createDirectory();
+
+            // tre campioni, coi nomi da sedici lettere come allora
+            const juce::StringArray names { "KICK_UNO", "RIM_DUE", "HAT_TRE" };
+            for (const auto& n : names)
+                writeWav (folder.getChildFile (n + ".wav"));
+
+            // Si costruisce un programma con la struttura del formato vero:
+            // intestazione, nomi, nome del programma, tabella delle note,
+            // volumi e panorami, e la mappa che dice che nota fa ogni pad.
+            juce::MemoryBlock data;
+            data.setSize (0x15, true);
+            auto* head = (std::uint8_t*) data.getData();
+            head[0] = 0x07;
+            head[1] = 0x04;
+            head[2] = (std::uint8_t) (names.size() + 1);    // la casella zero e' il niente
+
+            const auto pad16 = [] (const juce::String& text)
+            {
+                auto s = text.substring (0, 16);
+                while (s.length() < 16)
+                    s += " ";
+                return s;
+            };
+
+            for (const auto& n : names)
+            {
+                data.append (pad16 (n).toRawUTF8(), 16);
+                data.append ("\0", 1);
+            }
+
+            const char marker[2] = { 0x1e, 0x00 };
+            data.append (marker, 2);
+            data.append (pad16 ("KIT VECCHIO").toRawUTF8(), 16);
+            data.setSize (data.getSize() + 16, true);       // i sedici byte prima delle note
+
+            // 64 note, dalla 35 alla 98: il primo byte e' il campione, da uno
+            const size_t noteTable = data.getSize();
+            data.setSize (noteTable + 64 * 25, true);
+            auto* bytes = (std::uint8_t*) data.getData();
+            bytes[noteTable + (36 - 35) * 25] = 1;          // nota 36: il primo campione
+            bytes[noteTable + (37 - 35) * 25] = 2;
+            bytes[noteTable + (42 - 35) * 25] = 3;
+
+            // volumi e panorami
+            const size_t levels = data.getSize() + 2;
+            data.setSize (levels + 64 * 6, true);
+            bytes = (std::uint8_t*) data.getData();
+            for (int i = 0; i < 64; ++i)
+            {
+                bytes[levels + i * 6] = 100;
+                bytes[levels + i * 6 + 1] = 50;
+            }
+            bytes[levels + (37 - 35) * 6] = 50;             // il rim a meta' volume
+            bytes[levels + (42 - 35) * 6 + 1] = 100;        // il charleston tutto a destra
+
+            // la mappa dei pad: come la macchina vera, A01 fa la nota 37
+            const size_t padMap = data.getSize() + 2;
+            data.setSize (padMap + 64, true);
+            bytes = (std::uint8_t*) data.getData();
+            // gli altri pad su note vuote: sulla macchina vera due pad non
+            // possono fare la stessa nota
+            for (int i = 0; i < 64; ++i)
+                bytes[padMap + i] = (std::uint8_t) (50 + (i % 48));
+            bytes[padMap + 0] = 37;
+            bytes[padMap + 1] = 36;
+            bytes[padMap + 2] = 42;
+
+            const auto file = folder.getChildFile ("KIT VECCHIO.PGM");
+            file.replaceWithData (data.getData(), data.getSize());
+
+            machine::Machine m;
+            m.prepare (44100.0);
+            m.clearAllPads();
+
+            const auto result = mpc::loadProgram (file, m);    // riconosciuto dai primi due byte
+
+            expect (result.ok(), "non ha caricato: " + result.error);
+            expectEquals (result.programName, juce::String ("KIT VECCHIO"));
+            expectEquals (result.padsLoaded, 3);
+
+            expectEquals (m.engine().drum (0).name, juce::String ("RIM_DUE"));
+            expectEquals (m.engine().drum (1).name, juce::String ("KICK_UNO"));
+            expectEquals (m.engine().drum (2).name, juce::String ("HAT_TRE"));
+            expect (! m.engine().drum (3).loaded(), "il quarto pad doveva restare vuoto");
+
+            expectWithinAbsoluteError (m.engine().drum (0).level, 0.5f, 0.02f);
+            expectWithinAbsoluteError (m.engine().drum (2).pan, 1.0f, 0.02f);
+        }
+
+        beginTest ("un .pgm tagliato a meta' non fa danni");
+        {
+            machine::Machine m;
+            m.prepare (44100.0);
+
+            auto bad = temp.getChildFile ("corto.pgm");
+            juce::MemoryBlock small;
+            small.setSize (1200, true);
+            auto* b = (std::uint8_t*) small.getData();
+            b[0] = 0x07;
+            b[1] = 0x04;
+            b[2] = 40;                                   // dice quaranta campioni ma il file e' corto
+            bad.replaceWithData (small.getData(), small.getSize());
+
+            const auto result = mpc::loadProgram (bad, m);
+            expect (! result.ok());
+            expect (result.error.isNotEmpty());
+        }
+
+        beginTest ("i campioni .SND delle macchine vecchie si leggono");
+        {
+            // l'intestazione del formato: 01 04, il nome, i canali, quanti
+            // campioni, e poi il suono a sedici bit
+            const int frames = 1000;
+            juce::MemoryBlock data;
+            data.setSize (42, true);
+            auto* b = (std::uint8_t*) data.getData();
+            b[0] = 0x01;
+            b[1] = 0x04;
+            b[0x15] = 0;                                 // mono
+            b[0x1e] = (std::uint8_t) (frames & 0xff);
+            b[0x1f] = (std::uint8_t) ((frames >> 8) & 0xff);
+
+            std::vector<std::int16_t> samples ((size_t) frames);
+            for (int i = 0; i < frames; ++i)
+                samples[(size_t) i] = (std::int16_t) (16000 * std::sin (0.05 * i));
+            data.append (samples.data(), samples.size() * sizeof (std::int16_t));
+
+            auto file = temp.getChildFile ("VECCHIO.SND");
+            file.replaceWithData (data.getData(), data.getSize());
+
+            juce::AudioBuffer<float> buffer;
+            double rate = 0.0;
+            expect (mpc::readSnd (file, buffer, rate), "non legge il .SND");
+            expectEquals (buffer.getNumSamples(), frames);
+            expectEquals (buffer.getNumChannels(), 1);
+            expectWithinAbsoluteError (rate, 44100.0, 0.1);
+            expect (buffer.getMagnitude (0, frames) > 0.4f, "il suono e' muto");
+
+            // un file che non e' un .SND
+            auto bad = temp.getChildFile ("NIENTE.SND");
+            bad.replaceWithText ("non sono un suono");
+            juce::AudioBuffer<float> other;
+            expect (! mpc::readSnd (bad, other, rate));
+        }
+
         temp.deleteRecursively();
     }
 };

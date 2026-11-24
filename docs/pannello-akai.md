@@ -284,9 +284,26 @@ campione va su quale pad.
   programma. Di ogni pad si prendono volume, panorama, accordatura, gruppo di
   taglio, modo di suonare e i punti di inizio e fine, quando ci sono.
 
-Quello che non leggiamo: i programmi delle macchine piu' vecchie (`.pgm` dei
-modelli 1000 e 2500, i `.snd` dell'MPC60 e dell'MPC3000) e i progetti interi
-(`.xpj`). Dentro un progetto, pero', i programmi `.xpm` e i wav ci sono e si
+- **Il programma vecchio (.pgm** dei modelli 2000 e 2000XL**)** si legge pure:
+  e' binario, non XML. Provato su un kit vero (AMBIENCE_SET_#1): quattordici
+  pad al posto giusto, col rullante di taglio su A01, la cassa su A02, il
+  charleston su A03 e i piatti aperti a destra e a sinistra come li aveva
+  lasciati chi l'ha fatto.
+- **I campioni .SND**, quelli delle macchine che non usavano i wav, si leggono
+  anche da soli, trascinandoli su un pad.
+
+Com'e' fatto un `.pgm` del 2000XL, letto da un file vero e tornato con tre
+controlli diversi: due byte di marchio (07 04), quanti campioni, i nomi da
+sedici lettere uno dietro l'altro, il nome del programma, poi 64 record da 25
+byte (uno per nota, dalla 35 alla 98) in cui il primo byte dice quale campione
+suona, poi 64 record da 6 byte col volume e il panorama, e infine 64 byte che
+dicono che nota fa ogni pad. La prova che la lettura e' giusta: i campioni
+cadono esattamente dove li mette lo standard General MIDI per la batteria,
+cassa sul 36, rullante sul 38, charleston chiuso sul 42.
+
+Quello che ancora non leggiamo: i programmi dei modelli 1000 e 2500 (stesso
+nome `.pgm` ma formato diverso), quelli dell'MPC3000, e i progetti interi
+(`.xpj`). Dentro un progetto, pero', i programmi e i campioni ci sono e si
 caricano a mano.
 
 I nomi dei campi nel programma cambiano da una versione all'altra della

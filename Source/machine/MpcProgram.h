@@ -26,7 +26,16 @@ struct Result
     bool ok() const { return error.isEmpty() && padsLoaded > 0; }
 };
 
-Result loadProgram (const juce::File& xpm, machine::Machine&);
+// Legge un programma, nuovo (.xpm, XML) o vecchio (.pgm, binario): si guarda
+// cosa c'e' dentro, non come si chiama.
+Result loadProgram (const juce::File&, machine::Machine&);
+
+// Il programma delle macchine vecchie, 2000 e 2000XL.
+Result loadOldProgram (const juce::File& pgm, machine::Machine&);
+
+// I campioni delle macchine vecchie non sono wav: sono file .SND, cioe'
+// sedici bit grezzi dietro a un'intestazione di quarantadue byte.
+bool readSnd (const juce::File&, juce::AudioBuffer<float>& destination, double& sampleRate);
 
 // Dove cerchiamo il wav di un campione nominato dal programma.
 juce::File findSample (const juce::File& programFolder, const juce::String& name);

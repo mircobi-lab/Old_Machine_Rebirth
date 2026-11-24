@@ -449,7 +449,7 @@ void MainComponent::loadOntoSelected()
         "Scegli un suono o un programma per il pad "
             + machine::bankName (target.bank) + juce::String (target.pad),
         juce::File::getSpecialLocation (juce::File::userMusicDirectory),
-        "*.wav;*.aif;*.aiff;*.flac;*.mp3;*.xpm");
+        "*.wav;*.aif;*.aiff;*.flac;*.mp3;*.xpm;*.pgm;*.PGM;*.snd;*.SND");
 
     chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                           [this, target] (const juce::FileChooser& fc)
@@ -459,7 +459,7 @@ void MainComponent::loadOntoSelected()
             return;
 
         // un programma porta con se' tutto il kit, un suono va sul pad scelto
-        if (file.hasFileExtension ("xpm"))
+        if (file.hasFileExtension ("xpm;pgm"))
             loadProgram (file);
         else if (mpc.engine().loadFile (machine::drumIndex (target), file))
             refreshSurfaces();
@@ -639,7 +639,7 @@ void MainComponent::putSelectedInLibrary()
 void MainComponent::browseLibrary()
 {
     chooser = std::make_unique<juce::FileChooser> (lang::t ("LIBRERIA"), library::samplesFolder(),
-                                                   "*.wav;*.aif;*.aiff;*.flac;*.mp3;*.xpm");
+                                                   "*.wav;*.aif;*.aiff;*.flac;*.mp3;*.xpm;*.pgm;*.PGM;*.snd;*.SND");
 
     chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                           [this] (const juce::FileChooser& fc)
@@ -648,7 +648,7 @@ void MainComponent::browseLibrary()
         if (file == juce::File())
             return;
 
-        if (file.hasFileExtension ("xpm"))
+        if (file.hasFileExtension ("xpm;pgm"))
             loadProgram (file);
         else if (mpc.engine().loadFile (mpc.selectedDrumIndex(), file))
             mpc.setMessageFromOutside (file.getFileNameWithoutExtension().toUpperCase());
@@ -740,7 +740,7 @@ bool MainComponent::isInterestedInFileDrag (const juce::StringArray& files)
 
         // i suoni, i programmi della macchina vera, e le cartelle: un kit si
         // trascina dentro tutto intero
-        if (f.isDirectory() || f.hasFileExtension ("wav;aif;aiff;flac;mp3;ogg;xpm"))
+        if (f.isDirectory() || f.hasFileExtension ("wav;aif;aiff;flac;mp3;ogg;xpm;pgm;snd"))
             return true;
     }
 
@@ -771,14 +771,26 @@ void MainComponent::loadDropped (const juce::File& file, machine::PadRef& target
     if (! file.existsAsFile())
         return;
 
-    if (file.hasFileExtension ("xpm"))
+    if (file.hasFileExtension ("xpm;pgm"))
     {
         loadProgram (file);
         return;
     }
 
     const int index = machine::drumIndex (target);
-    mpc.engine().loadFile (index, file);
+
+    if (file.hasFileExtension ("snd"))
+    {
+        // i campioni delle macchine vecchie non li legge il lettore audio
+        juce::AudioBuffer<float> buffer;
+        double rate = 44100.0;
+        if (mpc::readSnd (file, buffer, rate))
+            mpc.engine().loadBuffer (index, file.getFileNameWithoutExtension(), buffer, rate);
+    }
+    else
+    {
+        mpc.engine().loadFile (index, file);
+    }
 
     if (index + 1 < machine::numDrums)
         target = machine::drumAt (index + 1);
@@ -788,7 +800,7 @@ void MainComponent::loadFolder (const juce::File& folder, machine::PadRef& targe
 {
     // Una cartella: se dentro c'e' un programma si carica quello, perche' sa
     // dove va ogni suono. Se no si mettono i wav sui pad in ordine di nome.
-    for (const auto& entry : juce::RangedDirectoryIterator (folder, false, "*.xpm"))
+    for (const auto& entry : juce::RangedDirectoryIterator (folder, false, "*.xpm;*.pgm;*.PGM"))
     {
         loadProgram (entry.getFile());
         return;
@@ -796,7 +808,7 @@ void MainComponent::loadFolder (const juce::File& folder, machine::PadRef& targe
 
     juce::Array<juce::File> sounds;
     for (const auto& entry : juce::RangedDirectoryIterator (folder, false,
-                                                            "*.wav;*.WAV;*.aif;*.aiff;*.flac"))
+                                                            "*.wav;*.WAV;*.aif;*.aiff;*.flac;*.snd;*.SND"))
         sounds.add (entry.getFile());
 
     sounds.sort();
